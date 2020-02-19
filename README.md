@@ -10,16 +10,19 @@
 
 Support for this integration is provided through the (Python anthemav_serial)[] module and supports Anthem models which communicate using Anthem's original RS232 serial Gen1 interface. For later models (while the v2 serial interface is still unsupported), the [IP-based 'anthemav'integration](https://www.home-assistant.io/integrations/anthemav/) can be used.
 
-|  Model(s)                        | Type Code    | RS232 Gen1 | RS232 Gen2 | IP | Notes |
-|  ------------------------------- | ------------ | -------- | -------- | -- | ----- |
+|  Model(s)                        | Series       | RS232 Gen1 | RS232 Gen2 | IP |
+|  ------------------------------- | ------------ | -------- | -------- | -- |
 |  Statement D2, D2v, D2v 3D       | ANTHEM_D2    | X |   |   |
 |  Statement D1                    | ANTHEM_D1    | X |   |   |
-|  AVM 20, AVM 30, AVM 50, AVM 50v | ANTHEM_AVM   | X |   |   | unknown
-|  MRX 300, MRX 500, MRX 700       |              | X |   |   | unknown if supported
-|  AVM 60                          |              | X | X | X | 
-|  MRX 310, MRX 510, MRX 710       |              |   | X | X |
-|  MRX 520, MRX 720, MRX 1120      |              |   | X | X |
-|  STR amplifiers                  |              |   | X | X |
+|  AVM 20                          | ANTHEM_AVM20 | X |   |   |
+|  AVM 30                          | ANTHEM_AVM30 | X |   |   |
+|  AVM 50, AVM 50v                 | ANTHEM_AVM50 | X |   |   |
+|  MRX 300, MRX 500, MRX 700       | ANTHEM_MRX   | X |   |   |
+|  AVM 60                          | ANTHEM_AVM60 | X | X | X | 
+|  MRX 310, MRX 510, MRX 710       | ANTHEM_MRX1  |   | X | X |
+|  MRX 520, MRX 720, MRX 1120      | ANTHEM_MRX2  |   | X | X |
+|  STR amplifiers                  | ANTHEM_STR   |   | X | X |
+
 
 ## Installation
 
