@@ -1,0 +1,5 @@
+{
+  "name": "Anthem A/V Receiver (RS232 Serial)",
+  "domains": ["media_player"],
+  "render_readme": true
+}
