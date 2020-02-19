@@ -13,6 +13,11 @@ For the following devices, it is recommended to use the [`anthemav` IP-based int
 * [MRX 520](https://www.anthemav.com/products-current/series=mrx-series-gen3/model=mrx-520/page=overview), [MRX 720](https://www.anthemav.com/products-current/collection=performance/model=mrx-720/page=overview), [MRX 1120](https://www.anthemav.com/products-current/collection=performance/model=mrx-1120/page=overview), and [AVM 60](https://www.anthemav.com/products-current/model=avm-60/page=overview)
 * [MRX 310](https://www.anthemav.com/products-archived/type=av-receiver/model=mrx-310/page=overview), [MRX 510](https://www.anthemav.com/products-archived/series=mrx-series/model=mrx-510/page=overview), [MRX 710](https://www.anthemav.com/products-archived/type=av-receiver/model=mrx-710/page=overview)
 
+
+Support for this integration is provided through the (Python anthemav_serial)[] module. The newer IP-based Anthem units 
+
+Older, RS-232 serial-based units like the D2v use a different protocol entirely and are not currently supported.
+
 ## Installation
 
 Visit the Home Assistant community if you need [help with installation and configuration of Anthem A/V receivers](https://community.home-assistant.io/t/anthem-line-of-receivers-and-pre-pros/1605/4).
@@ -62,3 +67,5 @@ The following is a simplest Lovelace card which shows an interface to an Anthem 
 
 ## Known Issues
 
+* The tuner is currently unsupported as are the media_player play, pause, prev, and next controls.
+* Only Zone 1 is currently supported
