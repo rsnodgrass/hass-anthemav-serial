@@ -8,7 +8,7 @@
 
 ## Supported Hardware
 
-Support for this integration is provided through the [Python anthemav_serial module](https://github.com/rsnodgrass/python-anthemav-serial) and supports Anthem models which communicate using Anthem's original RS232 serial Gen1 interface. For later models (while the v2 serial interface is still unsupported), the [IP-based anthemav integration](https://www.home-assistant.io/integrations/anthemav/) can be used.
+Support for this integration is provided through the [Python anthemav_serial module](https://github.com/rsnodgrass/python-anthemav-serial) and supports Anthem models which communicate using Anthem's original RS232 serial Gen1 interface. For later models (while Anthem's Gen2 serial interface is still unsupported), the [Home Assistant IP-based anthemav integration](https://www.home-assistant.io/integrations/anthemav/) can be used.
 
 |  Model(s)                        | Series       | RS232 Gen1 | RS232 Gen2 | IP |
 |  ------------------------------- | ------------ |:----------:|:----------:|:--:|
