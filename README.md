@@ -1,12 +1,12 @@
-# Anthem A/V Receivers (RS232 Serial Interface)
+# Anthem A/V Receivers (RS232 Serial Connection)
+
+![Anthem Logo](https://github.com/rsnodgrass/hass-anthemav-serial/blob/master/anthemav.png?raw=true)
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=WREP29UDAMB6G)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/custom-components/hacs)
 
 ## Supported Hardware
-
-
 
 For the following devices, it is recommended to use the [`anthemav` IP-based interface](https://www.home-assistant.io/integrations/anthemav/):
 
