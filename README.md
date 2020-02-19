@@ -8,15 +8,17 @@
 
 ## Supported Hardware
 
-For the following devices, it is recommended to use the [`anthemav` IP-based interface](https://www.home-assistant.io/integrations/anthemav/):
+Support for this integration is provided through the (Python anthemav_serial)[] module and supports Anthem models which communicate using Anthem's original RS232 serial v1 interface. For later models (while the v2 serial interface is still unsupported), the [IP-based 'anthemav'integration](https://www.home-assistant.io/integrations/anthemav/) can be used.
 
-* [MRX 520](https://www.anthemav.com/products-current/series=mrx-series-gen3/model=mrx-520/page=overview), [MRX 720](https://www.anthemav.com/products-current/collection=performance/model=mrx-720/page=overview), [MRX 1120](https://www.anthemav.com/products-current/collection=performance/model=mrx-1120/page=overview), and [AVM 60](https://www.anthemav.com/products-current/model=avm-60/page=overview)
-* [MRX 310](https://www.anthemav.com/products-archived/type=av-receiver/model=mrx-310/page=overview), [MRX 510](https://www.anthemav.com/products-archived/series=mrx-series/model=mrx-510/page=overview), [MRX 710](https://www.anthemav.com/products-archived/type=av-receiver/model=mrx-710/page=overview)
-
-
-Support for this integration is provided through the (Python anthemav_serial)[] module. The newer IP-based Anthem units 
-
-Older, RS-232 serial-based units like the D2v use a different protocol entirely and are not currently supported.
+|  Model(s)                        | Type Code    | RS232 v1 | RS232 v2 | IP | Notes |
+|  ------------------------------- | ------------ | -------- | -------- | -- | ----- |
+|  Statement D2, D2v, D2v 3D       | ANTHEM_D2    | X |   |   |
+|  Statement D1                    | ANTHEM_D1    | X |   |   |
+|  AVM 20, AVM 30, AVM 50, AVM 50v | ANTHEM_AVM   | X |   |   | unknown
+|  MRX 300, MRX 500, MRX 700       |              | X |   |   | unknown if supported
+|  AVM 60                          |              | X | X | X | 
+|  MRX 310, MRX 510, MRX 710       |              |   | X | X |
+|  MRX 520, MRX 720, MRX 1120      |              |   | X | X |
 
 ## Installation
 
