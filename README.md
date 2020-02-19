@@ -8,9 +8,9 @@
 
 ## Supported Hardware
 
-Support for this integration is provided through the (Python anthemav_serial)[] module and supports Anthem models which communicate using Anthem's original RS232 serial v1 interface. For later models (while the v2 serial interface is still unsupported), the [IP-based 'anthemav'integration](https://www.home-assistant.io/integrations/anthemav/) can be used.
+Support for this integration is provided through the (Python anthemav_serial)[] module and supports Anthem models which communicate using Anthem's original RS232 serial Gen1 interface. For later models (while the v2 serial interface is still unsupported), the [IP-based 'anthemav'integration](https://www.home-assistant.io/integrations/anthemav/) can be used.
 
-|  Model(s)                        | Type Code    | RS232 v1 | RS232 v2 | IP | Notes |
+|  Model(s)                        | Type Code    | RS232 Gen1 | RS232 Gen2 | IP | Notes |
 |  ------------------------------- | ------------ | -------- | -------- | -- | ----- |
 |  Statement D2, D2v, D2v 3D       | ANTHEM_D2    | X |   |   |
 |  Statement D1                    | ANTHEM_D1    | X |   |   |
@@ -19,6 +19,7 @@ Support for this integration is provided through the (Python anthemav_serial)[] 
 |  AVM 60                          |              | X | X | X | 
 |  MRX 310, MRX 510, MRX 710       |              |   | X | X |
 |  MRX 520, MRX 720, MRX 1120      |              |   | X | X |
+|  STR amplifiers                  |              |   | X | X |
 
 ## Installation
 
