@@ -43,12 +43,12 @@ Example configuration:
 ```yaml
 media_player:
   - platform: anthemav_serial
-    tty: /dev/ttyUSB0
+    serial_port: /dev/ttyUSB0
 ```
 
 {% configuration %}
-tty:
-  description: The serial tty used to connect to the device.
+serial_port:
+  description: The serial port path used to connect to the device.
   required: true
   type: string
 name:

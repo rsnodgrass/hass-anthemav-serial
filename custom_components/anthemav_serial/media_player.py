@@ -1,4 +1,4 @@
-r"""Support for Anthem A/V Receivers and Processors that support RS232 communication"""
+"""Support for Anthem A/V Receivers and Processors that support RS232 communication"""
 import logging
 
 import anthemav_serial
@@ -11,6 +11,7 @@ from homeassistant.components.media_player.const import (
     SUPPORT_TURN_ON,
     SUPPORT_VOLUME_MUTE,
     SUPPORT_VOLUME_SET,
+    SUPPORT_VOLUME_STEP
 )
 from homeassistant.const import (
     CONF_NAME,
@@ -28,29 +29,30 @@ DOMAIN = "anthemav_serial"
 SUPPORT_ANTHEMAV = (
     SUPPORT_VOLUME_SET
     | SUPPORT_VOLUME_MUTE
+    | SUPPORT_VOLUME_STEP
+    | SUPPORT_VOLUME_MUTE
     | SUPPORT_TURN_ON
     | SUPPORT_TURN_OFF
-    | SUPPORT_SELECT_SOURCE
+    | SUPPORT_SELECT_SOURCE   
 )
 
-CONF_TTY = 'tty'
+CONF_SERIAL_PORT = 'serial_port'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Required(CONF_TTY): cv.string,
+        vol.Required(CONF_SERIAL_PORT): cv.string,
         vol.Optional(CONF_NAME): cv.string
     }
 )
 
-
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up our socket to the AVR."""
 
-    tty = config.get(CONF_TTY)
+    tty = config.get(CONF_SERIAL_PORT)
     name = config.get(CONF_NAME)
     device = None
 
-    LOG.info("Provisioning Anthem AVR device at %s:%d", host, port)
+    LOG.info(f"Provisioning Anthem receiver/amp at {serial_port}")
 
     @callback
     def async_anthemav_update_callback(message):
@@ -58,16 +60,15 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         LOG.debug("Received update callback from AVR: %s", message)
         hass.async_create_task(device.async_update_ha_state())
 
-    avr = await anthemav.Connection.create(
+    conn = await anthemav.Connection.create(
         host=host, port=port, update_callback=async_anthemav_update_callback
     )
+    device = AnthemAVR(conn, name)
 
-    device = AnthemAVR(avr, name)
+#    LOG.debug("dump_devicedata: %s", device.dump_avrdata)
+#    LOG.debug("dump_conndata: %s", avr.dump_conndata)
 
-    LOG.debug("dump_devicedata: %s", device.dump_avrdata)
-    LOG.debug("dump_conndata: %s", avr.dump_conndata)
-
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, device.avr.close)
+#    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, device.avr.close)
     async_add_entities([device])
 
 
@@ -91,7 +92,7 @@ class AnthemAVR(MediaPlayerDevice):
     @property
     def should_poll(self):
         """No polling needed."""
-        return False
+        return False # FIXME: True
 
     @property
     def name(self):
