@@ -27,16 +27,6 @@ LOG = logging.getLogger(__name__)
 
 DOMAIN = "anthemav_serial"
 
-SUPPORT_ANTHEMAV = (
-    SUPPORT_VOLUME_SET
-    | SUPPORT_VOLUME_MUTE
-    | SUPPORT_VOLUME_STEP
-    | SUPPORT_VOLUME_MUTE
-    | SUPPORT_TURN_ON
-    | SUPPORT_TURN_OFF
-    | SUPPORT_SELECT_SOURCE   
-)
-
 CONF_SERIAL_PORT = "serial_port"
 CONF_BAUD = "baudrate"
 
@@ -63,6 +53,17 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
+SUPPORT_ANTHEM_SERIAL = (
+    SUPPORT_VOLUME_SET
+    | SUPPORT_VOLUME_MUTE
+    | SUPPORT_VOLUME_STEP
+    | SUPPORT_VOLUME_MUTE
+    | SUPPORT_TURN_ON
+    | SUPPORT_TURN_OFF
+    | SUPPORT_SELECT_SOURCE   
+)
+
+
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up our socket to the AVR."""
 
@@ -81,7 +82,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     conn = await anthemav.Connection.create(
         serial_port, update_callback=async_anthemav_update_callback
     )
-    device = AnthemAVR(conn, name)
+    device = AnthemAVSerial(conn, name)
 
 #    LOG.debug("dump_devicedata: %s", device.dump_avrdata)
 #    LOG.debug("dump_conndata: %s", avr.dump_conndata)
@@ -90,7 +91,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     async_add_entities([device])
 
 
-class AnthemAVR(MediaPlayerDevice):
+class AnthemAVSerial(MediaPlayerDevice):
     """Entity reading values from Anthem AVR interface."""
 
     def __init__(self, avr, name):
@@ -105,7 +106,7 @@ class AnthemAVR(MediaPlayerDevice):
     @property
     def supported_features(self):
         """Flag media player features that are supported."""
-        return SUPPORT_ANTHEMAV
+        return SUPPORT_ANTHEM_SERIAL
 
     @property
     def should_poll(self):
