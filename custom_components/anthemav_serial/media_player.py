@@ -15,6 +15,7 @@ from homeassistant.components.media_player.const import (
 )
 from homeassistant.const import (
     CONF_NAME,
+    CONF_PORT,
     EVENT_HOMEASSISTANT_STOP,
     STATE_OFF,
     STATE_ON,
@@ -36,19 +37,36 @@ SUPPORT_ANTHEMAV = (
     | SUPPORT_SELECT_SOURCE   
 )
 
-CONF_SERIAL_PORT = 'serial_port'
+CONF_SERIAL_PORT = "serial_port"
+CONF_BAUD = "baudrate"
+
+CONF_ZONES = "zones"
+CONF_SOURCES = "sources"
+
+# from https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/blackbird/media_player.py
+MEDIA_PLAYER_SCHEMA = vol.Schema({ATTR_ENTITY_ID: cv.comp_entity_ids})
+
+# FIXME: we can probably skip zones....
+ZONE_SCHEMA = vol.Schema({vol.Required(CONF_NAME): cv.string})
+ZONE_IDS = vol.All(vol.Coerce(int), vol.Range(min=1, max=3))   # valid zones: 1-3
+
+SOURCE_SCHEMA = vol.Schema({vol.Required(CONF_NAME): cv.string})
+SOURCE_IDS = vol.All(vol.Coerce(int), vol.Range(min=1, max=9)) # valid sources: 1-9
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
+        vol.Optional(CONF_NAME): cv.string,
         vol.Required(CONF_SERIAL_PORT): cv.string,
-        vol.Optional(CONF_NAME): cv.string
+        vol.Optional(CONF_BAUD): cv.int,
+#        vol.Optional(CONF_ZONES): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
+        vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA}),
     }
 )
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up our socket to the AVR."""
 
-    tty = config.get(CONF_SERIAL_PORT)
+    serial_port = config.get(CONF_SERIAL_PORT)
     name = config.get(CONF_NAME)
     device = None
 
@@ -57,11 +75,11 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     @callback
     def async_anthemav_update_callback(message):
         """Receive notification from transport that new data exists."""
-        LOG.debug("Received update callback from AVR: %s", message)
+        LOG.debug("Received update callback from Anthem AVR: %s", message)
         hass.async_create_task(device.async_update_ha_state())
 
     conn = await anthemav.Connection.create(
-        host=host, port=port, update_callback=async_anthemav_update_callback
+        serial_port, update_callback=async_anthemav_update_callback
     )
     device = AnthemAVR(conn, name)
 
@@ -120,6 +138,16 @@ class AnthemAVR(MediaPlayerDevice):
         """Return volume level from 0 to 1."""
         return self._lookup("volume_as_percentage", 0.0)
 
+    def volume_up(self):
+        """Volume up the media player."""
+        #self._nad_receiver.main_volume("+")
+        return
+
+    def volume_down(self):
+        """Volume down the media player."""
+        # self._nad_receiver.main_volume("-")
+        return
+    
     @property
     def media_title(self):
         """Return current input name (closest we have to media title)."""
