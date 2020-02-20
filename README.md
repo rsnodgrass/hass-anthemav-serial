@@ -46,18 +46,23 @@ media_player:
     serial_port: /dev/ttyUSB0
 ```
 
+More complex option:
+
 ```yaml
 media_player:
   - platform: anthemav_serial
     serial_port: /dev/ttyUSB0
     baudrate: 115200
     model: d2
-    protocol: anthem_gen2
+    protocol: anthem_gen1
 ```
+
+protocol: anthem_gen1 (default), anthem_gen2, ip_gen2
+baudrate: 9600 (default)
 
 ### Step 3: Add Lovelace Card
 
-The following is a simplest Lovelace card which shows an interface to an Anthem A/V receiver:
+The following is a simplest Lovelace card which shows an interface to an Anthem receiver:
 
 ```yaml
 ```
@@ -68,6 +73,7 @@ The following is a simplest Lovelace card which shows an interface to an Anthem 
 
 * [Community support for Home Assistant integrations with Anthem A/V receivers](https://community.home-assistant.io/t/anthem-line-of-receivers-and-pre-pros/1605/4)
 * [Home Assistant `anthemav` IP-based interface](https://www.home-assistant.io/integrations/anthemav/)
+* [Anthem AVSForum support thread]()
 
 ## Known Issues
 
