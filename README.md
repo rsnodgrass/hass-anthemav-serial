@@ -46,16 +46,14 @@ media_player:
     serial_port: /dev/ttyUSB0
 ```
 
-{% configuration %}
-serial_port:
-  description: The serial port path used to connect to the device.
-  required: true
-  type: string
-name:
-  description: The name of the device used in the frontend.
-  required: false
-  type: string
-{% endconfiguration %}
+```yaml
+media_player:
+  - platform: anthemav_serial
+    serial_port: /dev/ttyUSB0
+    baudrate: 115200
+    model: d2
+    protocol: anthem_gen2
+```
 
 ### Step 3: Add Lovelace Card
 
