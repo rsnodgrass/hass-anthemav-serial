@@ -114,12 +114,9 @@ class AnthemAVSerial(MediaPlayerDevice):
         self._zone_id = zone_id
         self._name = name
 
-    def _lookup(self, propname, dval=None):
-        return getattr(self.avr.protocol, propname, dval)
-
     @property
     def supported_features(self):
-        """Flag media player features that are supported"""
+        """Return supported media player features"""
         return SUPPORTED_FEATURES_ANTHEM_SERIAL
 
     @property

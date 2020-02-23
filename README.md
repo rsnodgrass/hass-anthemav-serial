@@ -10,18 +10,18 @@
 
 Support for this integration is provided through the [Python anthemav_serial module](https://github.com/rsnodgrass/python-anthemav-serial) and supports Anthem models which communicate using Anthem's original RS232 serial Gen1 interface. For later models (while Anthem's Gen2 serial interface is still unsupported), the [Home Assistant IP-based anthemav integration](https://www.home-assistant.io/integrations/anthemav/) can be used.
 
-|  Model(s)                        | Series | RS232 Gen1 | RS232 Gen2 | IP |
-|  ------------------------------- | ------ |:----------:|:----------:|:--:|
-|  Statement D2, D2v, D2v 3D       | d2     | X |   |   |
-|  Statement D1                    | d1     | X |   |   |
-|  AVM 20                          | avm20  | X |   |   |
-|  AVM 30                          | avm30  | X |   |   |
-|  AVM 50, AVM 50v                 | avm50  | X |   |   |
-|  MRX 300, MRX 500, MRX 700       | mrx    | X |   |   |
-|  AVM 60                          | avm60  |   | X | X | 
-|  MRX 310, MRX 510, MRX 710       | mrx1   |   | X | X |
-|  MRX 520, MRX 720, MRX 1120      | mrx2   |   | X | X |
-|  STR amplifiers                  | str    |   | X | X |
+|  Model(s)                        | Series | RS232  | IP |
+|  ------------------------------- | ------ |:------:|:--:|
+|  Statement D2, D2v, D2v 3D       | d2     | *Gen1* | none |
+|  Statement D1                    | d1     | *Gen1* | none |
+|  AVM 20                          | avm20  | *Gen1* | none |
+|  AVM 30                          | avm30  | *Gen1* | none |
+|  AVM 50, AVM 50v                 | avm50  | *Gen1* | none |
+|  MRX 300, MRX 500, MRX 700       | mrx    | *Gen1* | none |
+|  AVM 60                          | avm60  | Gen2   | Gen2 | 
+|  MRX 310, MRX 510, MRX 710       | mrx1   | Gen2   | Gen2 |
+|  MRX 520, MRX 720, MRX 1120      | mrx2   | Gen2   | Gen2 |
+|  STR amplifiers                  | str    | Gen2   | Gen2 |
 
 
 ## Installation
