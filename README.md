@@ -12,12 +12,12 @@ Support for this integration is provided through the [Python anthemav_serial mod
 
 |  Model(s)                        | Series | RS232  | IP |
 |  ------------------------------- | ------ |:------:|:--:|
-|  Statement D2, D2v, D2v 3D       | d2     | *Gen1* | none |
-|  Statement D1                    | d1     | *Gen1* | none |
-|  AVM 20                          | avm20  | *Gen1* | none |
-|  AVM 30                          | avm30  | *Gen1* | none |
-|  AVM 50, AVM 50v                 | avm50  | *Gen1* | none |
-|  MRX 300, MRX 500, MRX 700       | mrx    | *Gen1* | none |
+|  Statement D2, D2v, D2v 3D       | d2     | **Gen1** | none |
+|  Statement D1                    | d1     | **Gen1* *| none |
+|  AVM 20                          | avm20  | **Gen1** | none |
+|  AVM 30                          | avm30  | **Gen1** | none |
+|  AVM 50, AVM 50v                 | avm50  | **Gen1** | none |
+|  MRX 300, MRX 500, MRX 700       | mrx    | **Gen1** | none |
 |  AVM 60                          | avm60  | Gen2   | Gen2 | 
 |  MRX 310, MRX 510, MRX 710       | mrx1   | Gen2   | Gen2 |
 |  MRX 520, MRX 720, MRX 1120      | mrx2   | Gen2   | Gen2 |
