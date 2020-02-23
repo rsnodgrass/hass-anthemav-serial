@@ -8,17 +8,17 @@
 
 ## Supported Hardware
 
-Support for this integration is provided through the [Python anthemav_serial module](https://github.com/rsnodgrass/python-anthemav-serial) and supports Anthem models which communicate using Anthem's original RS232 serial Gen1 interface. For later models (while Anthem's Gen2 serial interface is still unsupported), the [Home Assistant IP-based anthemav integration](https://www.home-assistant.io/integrations/anthemav/) can be used.
+Support for this integration is provided through the [Python anthemav_serial module](https://github.com/rsnodgrass/python-anthemav-serial) and supports Anthem models which communicate using Anthem's original RS232 serial Gen1 interface. For later models (while Anthem's Gen2 serial interface is still unsupported), the [Home Assistant IP-based anthemav integration](https://www.home-assistant.io/integrations/anthemav/) can be used. If someone wants to contribute and test the Gen2 RS232 integration, please feel free to contribute.
 
 |  Model(s)                        | Series | RS232  | IP |
 |  ------------------------------- | ------ |:------:|:--:|
 |  Statement D2, D2v, D2v 3D       | d2     | **Gen1** | none |
-|  Statement D1                    | d1     | **Gen1* *| none |
+|  Statement D1                    | d1     | **Gen1** | none |
 |  AVM 20                          | avm20  | **Gen1** | none |
 |  AVM 30                          | avm30  | **Gen1** | none |
 |  AVM 50, AVM 50v                 | avm50  | **Gen1** | none |
 |  MRX 300, MRX 500, MRX 700       | mrx    | **Gen1** | none |
-|  AVM 60                          | avm60  | Gen2   | Gen2 | 
+|  AVM 60                          | avm60  | Gen2   | Gen2 |
 |  MRX 310, MRX 510, MRX 710       | mrx1   | Gen2   | Gen2 |
 |  MRX 520, MRX 720, MRX 1120      | mrx2   | Gen2   | Gen2 |
 |  STR amplifiers                  | str    | Gen2   | Gen2 |
@@ -36,7 +36,7 @@ NOTE: The 'master' branch of this custom component is considered unstable, beta 
 
 ### Step 2: Configuration
 
-Example configuration:
+Simplest configuration example:
 
 ```yaml
 media_player:
@@ -47,7 +47,7 @@ media_player:
 
 In the case above, Home Assistant integration will automatically populate all the inputs and sources available on the Anthem series specified. For specific details on supported features for each Anthem model, [see the series configuration from anthemav_serial](https://github.com/rsnodgrass/python-anthemav-serial/tree/master/anthemav_serial/series).
 
-Additional configuration:
+More advanced configuration example:
 
 ```yaml
 media_player:
@@ -70,13 +70,7 @@ media_player:
         name: "Sonos"
 ```
 
-Where source key maps to the appropriate source id for the configured Anthem series, e.g.:
-
-| Id | Anthem Source Name |
-|:--:| ------------------ | 
-
-
-
+To determine zones and source ids, check with the RS232 programming guide from Anthem for your amplifier model. Alternatively, these may be defined in [the series configuration from anthemav_serial](https://github.com/rsnodgrass/python-anthemav-serial/tree/master/anthemav_serial/series).
 
 ### Step 3: Add Lovelace Card
 
