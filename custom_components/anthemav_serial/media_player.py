@@ -1,7 +1,7 @@
 """Media Player for Anthem A/V Receivers and Processors that support RS232 communication"""
 import logging
 
-import anthemav_serial
+from anthemav_serial import get_async_amp_controller
 import voluptuous as vol
 
 from homeassistant.components.media_player import PLATFORM_SCHEMA, MediaPlayerDevice
@@ -49,10 +49,10 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Optional(CONF_NAME): cv.string,
         vol.Required(CONF_PORT): cv.string,
-        vol.Optional(CONF_SERIES, default="d2"): cv.String,  # FIXME: check if in SUPPORTED_ANTHEM_SERIES
-        vol.Optional(CONF_BAUD): cv.int,
-#        vol.Optional(CONF_ZONES): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
+        vol.Required(CONF_SERIES, default="d2"): cv.String,  # FIXME: check if in SUPPORTED_ANTHEM_SERIES
+        vol.Required(CONF_ZONES): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
         vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA}),
+        vol.Optional(CONF_BAUD, default=9600): cv.int,
     }
 )
 
@@ -83,27 +83,35 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         LOG.debug("Received update callback from Anthem AVR: %s", message)
         hass.async_create_task(device.async_update_ha_state())
 
-    conn = await anthemav.Connection.create(
-        serial_port, update_callback=async_anthemav_update_callback
-    )
-    device = AnthemAVSerial(conn, name)
+    amp = await get_async_amp_controller(series, serial_port, hass.loop)
+    if amp is None:
+        LOG.error(f"Failed to connect to Anthem receiver ({serial_port}; baud={baud})")
+        return
 
-#    amp = await get_async_amp_controller(series, serial_port, loop)
+    # override default baudrate, if specified
+    baud = config.get(CONF_BAUD)
+    if baud:
+        amp.set_baudrate(baud)
 
-#    LOG.debug("dump_devicedata: %s", device.dump_avrdata)
-#    LOG.debug("dump_conndata: %s", avr.dump_conndata)
+    # FIXME: handle NO zones specified (e.g. load default for series)
 
-#    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, device.avr.close)
-    async_add_entities([device])
+    # create a media_player device for each zone
+    devices = []
+    for zone_id, extra in config[CONF_ZONES].items():
+        name = extra[CONF_NAME]
+        LOG.info(f"Adding {series} zone {zone_id} - {name}")
+        devices.append( AnthemAVSerial(amp, zone_id, name) )
 
+    async_add_entities(devices)
 
 class AnthemAVSerial(MediaPlayerDevice):
     """Entity reading values from Anthem AVR interface"""
 
-    def __init__(self, avr, name):
-        """Initialize entity with transport"""
+    def __init__(self, amp, zone_id, name):
+        """Initialize Anthem media player zone"""
         super().__init__()
-        self.avr = avr
+        self._amp = amp
+        self._zone_id = zone_id
         self._name = name
 
     def _lookup(self, propname, dval=None):
@@ -117,12 +125,12 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     def should_poll(self):
         """No polling needed."""
-        return False # FIXME: True
+        return True # FIXME: make non-polling at some point
 
     @property
     def name(self):
         """Return name of device."""
-        return self._name or self._lookup("model")
+        return self._name
 
     @property
     def state(self):
@@ -181,23 +189,26 @@ class AnthemAVSerial(MediaPlayerDevice):
 
     async def async_select_source(self, source):
         """Change AVR to the designated source (by name)"""
+        source_id = 1 # FIXME
+        self._amp.set_source(zone_id, source_id)
+
         self._update_avr("input_name", source)
 
     async def async_turn_off(self):
         """Turn AVR power off"""
-        self._update_avr("power", False)
+        self._amp.set_power(zone_id, False)
 
     async def async_turn_on(self):
         """Turn AVR power on"""
-        self._update_avr("power", True)
+        self._amp.set_power(zone_id, True)
 
     async def async_set_volume_level(self, volume):
         """Set AVR volume (0.0 to 1.0)"""
-        self._update_avr("volume_as_percentage", volume)
+#        self._update_avr("volume_as_percentage", volume)
 
     async def async_mute_volume(self, mute):
         """Engage AVR mute"""
-        self._update_avr("mute", mute)
+        self._amp.set_mute(zone_id, True)
 
     def _update_avr(self, propname, value):
         """Update a property in the AVR"""

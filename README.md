@@ -41,20 +41,42 @@ Example configuration:
 ```yaml
 media_player:
   - platform: anthemav_serial
-    port: /dev/ttyUSB0
     series: d2
+    port: /dev/ttyUSB0
 ```
 
-More complex option:
+In the case above, Home Assistant integration will automatically populate all the inputs and sources available on the Anthem series specified. For specific details on supported features for each Anthem model, [see the series configuration from anthemav_serial](https://github.com/rsnodgrass/python-anthemav-serial/tree/master/anthemav_serial/series).
+
+Additional configuration:
 
 ```yaml
 media_player:
   - platform: anthemav_serial
-    port: /dev/ttyUSB0
     series: avm50
-    name: "Anthem AVM50"
+    port: /dev/ttyUSB0
+    name: "Anthem AVM50v"
     baudrate: 115200
+
+    zones:
+      1:
+        name: "Home Theater"
+
+    sources:
+      1:
+        name: "Fire TV"
+      2:
+        name: "Broadcast TV"
+      3:
+        name: "Sonos"
 ```
+
+Where source key maps to the appropriate source id for the configured Anthem series, e.g.:
+
+| Id | Anthem Source Name |
+|:--:| ------------------ | 
+
+
+
 
 ### Step 3: Add Lovelace Card
 
@@ -75,3 +97,7 @@ The following is a simplest Lovelace card which shows an interface to an Anthem 
 
 * The tuner is currently unsupported as are the media_player play, pause, prev, and next controls.
 * Only Zone 1 is currently supported
+
+#### Future
+
+* add "snapshot" state like Monoprice (save state to play doorbell, etc)
