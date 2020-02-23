@@ -77,7 +77,11 @@ To determine zones and source ids, check with the RS232 programming guide from A
 The following is a simplest Lovelace card which shows an interface to an Anthem receiver:
 
 ```yaml
+type: media-control
+entity: media_player.anthem_d2
 ```
+
+Or use the [mini-media-player](https://github.com/kalkih/mini-media-player) for more control over source selection and other amplifiers features.
 
 ![Anthem Lovelace Examples](https://github.com/rsnodgrass/hass-anthemav-serial/blob/master/lovelace/mediaplayer.png?raw=true)
 
@@ -89,8 +93,8 @@ The following is a simplest Lovelace card which shows an interface to an Anthem 
 
 ## Known Issues
 
-* The tuner is currently unsupported as are the media_player play, pause, prev, and next controls.
-* Only Zone 1 is currently supported
+* AM/FM tuners are unsupported
+* play, pause, prev, and next controls are unsupported
 
 #### Future
 
