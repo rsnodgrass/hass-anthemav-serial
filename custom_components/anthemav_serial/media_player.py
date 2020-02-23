@@ -95,24 +95,27 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     # FIXME: handle NO zones specified (e.g. load default for series)
 
+    sources = config[CONF_SOURCES]
+
     # create a media_player device for each zone
     devices = []
-    for zone_id, extra in config[CONF_ZONES].items():
+    for zone, extra in config[CONF_ZONES].items():
         name = extra[CONF_NAME]
-        LOG.info(f"Adding {series} zone {zone_id} - {name}")
-        devices.append( AnthemAVSerial(amp, zone_id, name) )
+        LOG.info(f"Adding {series} zone {zone} - {name}")
+        devices.append( AnthemAVSerial(amp, zone, name, sources) )
 
     async_add_entities(devices)
 
 class AnthemAVSerial(MediaPlayerDevice):
     """Entity reading values from Anthem AVR interface"""
 
-    def __init__(self, amp, zone_id, name):
+    def __init__(self, amp, zone_id, name, sources):
         """Initialize Anthem media player zone"""
         super().__init__()
         self._amp = amp
-        self._zone_id = zone_id
+        self._zone = zone_id
         self._name = name
+        self._sources = sources
 
     @property
     def supported_features(self):
@@ -151,69 +154,52 @@ class AnthemAVSerial(MediaPlayerDevice):
         return self._lookup("volume_as_percentage", 0.0)
 
     def volume_up(self):
-        """Volume up the media player"""
-        #self._nad_receiver.main_volume("+")
-        return
+        return self._amp.volume_up(self._zone)
 
     def volume_down(self):
-        """Volume down the media player"""
-        # self._nad_receiver.main_volume("-")
-        return
+        return self._amp.volume_down(self._zone)
     
     @property
     def media_title(self):
         """Return current input name (closest we have to media title)"""
-        return self._lookup("input_name", "No Source")
+        return "No Source" # FIXME?
+        #return self._lookup("input_name", "No Source")
 
     @property
     def app_name(self):
         """Return details about current video and audio stream"""
-        return (
-            self._lookup("video_input_resolution_text", "")
-            + " "
-            + self._lookup("audio_input_name", "")
-        )
+        return "Unknown"
 
     @property
     def source(self):
         """Return currently selected input"""
-        return self._lookup("input_name", "Unknown")
+        return "No Source"
+        #return self._lookup("input_name", "Unknown")
 
     @property
     def source_list(self):
         """Return all active, configured inputs"""
-        return self._lookup("input_list", ["Unknown"])
+        return self._sources.keys()
+        # FIXME: needs to be values()['name']?
 
     async def async_select_source(self, source):
         """Change AVR to the designated source (by name)"""
-        source_id = 1 # FIXME
-        self._amp.set_source(zone_id, source_id)
-
-        self._update_avr("input_name", source)
+        source_id = 1 # FIXME: Find source name to source_id?
+        self._amp.set_source(self._zone, source_id)
 
     async def async_turn_off(self):
         """Turn AVR power off"""
-        self._amp.set_power(zone_id, False)
+        self._amp.set_power(self._zone, False)
 
     async def async_turn_on(self):
         """Turn AVR power on"""
-        self._amp.set_power(zone_id, True)
+        self._amp.set_power(self._zone, True)
 
     async def async_set_volume_level(self, volume):
         """Set AVR volume (0.0 to 1.0)"""
 #        self._update_avr("volume_as_percentage", volume)
+        return
 
     async def async_mute_volume(self, mute):
-        """Engage AVR mute"""
-        self._amp.set_mute(zone_id, True)
-
-    def _update_avr(self, propname, value):
-        """Update a property in the AVR"""
-        LOG.info("Sending command to AVR: set %s to %s", propname, str(value))
-        setattr(self.avr.protocol, propname, value)
-
-    @property
-    def dump_avrdata(self):
-        """Return state of avr object for debugging forensics."""
-        attrs = vars(self)
-        return "dump_avrdata: " + ", ".join("%s: %s" % item for item in attrs.items())
+        # FIXME: How do we turn mute off?
+        self._amp.set_mute(self._zone, True)
