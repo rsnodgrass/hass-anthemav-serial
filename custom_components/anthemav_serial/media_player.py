@@ -66,30 +66,29 @@ SUPPORTED_FEATURES_ANTHEM_SERIAL = (
     | SUPPORT_SELECT_SOURCE   
 )
 
-
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Set up our socket to the AVR."""
+    """Setup the Anthem media player platform"""
 
     name = config.get(CONF_NAME)
     series = config.get(CONF_SERIES)
     serial_port = config.get(CONF_SERIAL_PORT)
-    device = None
+    baud = config.get(CONF_BAUD)
+
+#   FIXME: need to pass callback into amp controller to get notifications of changes
+#    device = None
+#    @callback
+#    def async_anthemav_update_callback(message):
+#        """Update notification that should be called whenever underlying data may have changed."""
+#        LOG.debug("Update callback from Anthem AVR: %s", message)
+#        hass.async_create_task(device.async_update_ha_state())
 
     LOG.info(f"Provisioning Anthem {series} receiver at {serial_port}")
-
-    @callback
-    def async_anthemav_update_callback(message):
-        """Update notification that should be called whenever underlying data may have changed."""
-        LOG.debug("Received update callback from Anthem AVR: %s", message)
-        hass.async_create_task(device.async_update_ha_state())
-
     amp = await get_async_amp_controller(series, serial_port, hass.loop)
     if amp is None:
         LOG.error(f"Failed to connect to Anthem receiver ({serial_port}; baud={baud})")
         return
 
     # override default baudrate, if specified
-    baud = config.get(CONF_BAUD)
     if baud:
         amp.set_baudrate(baud)
 
@@ -117,6 +116,9 @@ class AnthemAVSerial(MediaPlayerDevice):
         self._name = name
         self._sources = sources
 
+        self._input = None
+        # FIXME: zone status
+
     @property
     def supported_features(self):
         """Return supported media player features"""
@@ -125,7 +127,7 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     def should_poll(self):
         """No polling needed."""
-        return True # FIXME: make non-polling at some point
+        return True # FIXME: make non-polling at some point (see commeted out callback above)
 
     @property
     def name(self):
@@ -135,8 +137,7 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     def state(self):
         """Return state of power on/off"""
-        pwrstate = self._lookup("power")
-
+        pwrstate = self._amp.is_on()
         if pwrstate is True:
             return STATE_ON
         if pwrstate is False:
@@ -146,12 +147,14 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     def is_volume_muted(self):
         """Return boolean reflecting mute state on device"""
-        return self._lookup("mute", False)
+#        return self._lookup("mute", False)
+        return False # FIXME
 
     @property
     def volume_level(self):
         """Return volume level from 0.0 to 1.0"""
-        return self._lookup("volume_as_percentage", 0.0)
+#        return self._lookup("volume_as_percentage", 0.0)
+        return 0.0 # FIXME
 
     def volume_up(self):
         return self._amp.volume_up(self._zone)
@@ -188,11 +191,9 @@ class AnthemAVSerial(MediaPlayerDevice):
         self._amp.set_source(self._zone, source_id)
 
     async def async_turn_off(self):
-        """Turn AVR power off"""
         self._amp.set_power(self._zone, False)
 
     async def async_turn_on(self):
-        """Turn AVR power on"""
         self._amp.set_power(self._zone, True)
 
     async def async_set_volume_level(self, volume):

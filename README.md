@@ -5,6 +5,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=WREP29UDAMB6G)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/custom-components/hacs)
+![beta_badge](https://img.shields.io/badge/maturity-Beta-yellow.png)
 
 ## Supported Hardware
 
@@ -23,16 +24,22 @@ Support for this integration is provided through the [Python anthemav_serial mod
 |  MRX 520, MRX 720, MRX 1120      | mrx2   | Gen2   | Gen2 |
 |  STR amplifiers                  | str    | Gen2   | Gen2 |
 
-
-## Installation
+## Support
 
 Visit the Home Assistant community if you need [help with installation and configuration of Anthem A/V receivers](https://community.home-assistant.io/t/anthem-line-of-receivers-and-pre-pros/1605/4).
 
+This integration was developed to cover use cases for my home integration, which I wanted to contribute back to the community. Additional features beyond what has already been provided are the responsibility of the community to implement (unless trivial to add).
+
+#### Versions
+
+The 'master' branch of this custom component is considered unstable, alpha quality and not guaranteed to work.
+Please make sure to use one of the official release branches when installing using HACS, see [what has changed in each version](https://github.com/rsnodgrass/hass-anthemav-serial/releases).
+
+## Installation
+
 ### Step 1: Install
 
-Easiest installation is by setting up [Home Assistant Community Store (HACS)](https://github.com/custom-components/hacs), and then adding the "Integration" repository: rsnodgrass/hass-anthemav-serial.
-
-NOTE: The 'master' branch of this custom component is considered unstable, beta quality and not guaranteed to work. Please make sure to use one of the official release branches when installing using HACS, see [what has changed in each version](https://github.com/rsnodgrass/hass-anthemav-serial/releases).
+Make sure [Home Assistant Community Store (HACS)](https://github.com/custom-components/hacs) is installed,  then add the "Integration" repository: `rsnodgrass/hass-anthemav-serial`.
 
 ### Step 2: Configuration
 
