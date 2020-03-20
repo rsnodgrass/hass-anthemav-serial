@@ -49,10 +49,10 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Optional(CONF_NAME): cv.string,
         vol.Required(CONF_PORT): cv.string,
-        vol.Required(CONF_SERIES, default="d2"): cv.String,  # FIXME: check if in SUPPORTED_ANTHEM_SERIES
+        vol.Required(CONF_SERIES, default="d2"): cv.string,  # FIXME: check if in SUPPORTED_ANTHEM_SERIES
         vol.Required(CONF_ZONES): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
         vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA}),
-        vol.Optional(CONF_BAUD, default=9600): cv.int,
+        vol.Optional(CONF_BAUD, default=9600): cv.positive_int,
     }
 )
 
