@@ -28,7 +28,7 @@ LOG = logging.getLogger(__name__)
 
 DOMAIN = "anthemav_serial"
 
-CONF_BAUD = "baudrate"
+CONF_SERIAL_CONFIG = "serial_config"
 
 CONF_SERIES = "series"
 CONF_ZONES = "zones"
@@ -48,6 +48,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Optional(CONF_NAME): cv.string,
         vol.Required(CONF_PORT): cv.string,
+        vol.Optional(CONF_SERIAL_CONFIG): vol.Schema({}),
         vol.Required(CONF_SERIES, default="d2"): cv.string,  # FIXME: check if in SUPPORTED_ANTHEM_SERIES
         vol.Required(CONF_ZONES): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
         vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA}),
@@ -71,7 +72,13 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     name = config.get(CONF_NAME)
     series = config.get(CONF_SERIES)
     serial_port = config.get(CONF_PORT)
-    baud = config.get(CONF_BAUD)
+
+    # allow configuration of the entire serial_init_args via YAML, instead of hardcoding baud
+    #
+    # E.g.:
+    #  serial_config:
+    #    baudrate: 9600
+    serial_config_overrides = config.get(CONF_SERIAL_CONFIG)
 
 #   FIXME: need to pass callback into amp controller to get notifications of changes
 #    device = None
@@ -81,15 +88,12 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 #        LOG.debug("Update callback from Anthem AVR: %s", message)
 #        hass.async_create_task(device.async_update_ha_state())
 
-    LOG.info(f"Provisioning Anthem {series} receiver at {serial_port}")
-    amp = await get_async_amp_controller(series, serial_port, hass.loop)
-    if amp is None:
-        LOG.error(f"Failed to connect to Anthem receiver ({serial_port}; baud={baud})")
-        return
 
-    # override default baudrate, if specified
-    if baud:
-        amp.set_baudrate(baud)
+    LOG.info(f"Provisioning Anthem {series} receiver at {serial_port}")
+    amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config=serial_config_overrides)
+    if amp is None:
+        LOG.error(f"Failed to connect to Anthem receiver ({serial_port}; {serial_config_overrides})")
+        return
 
     # FIXME: handle NO zones specified (e.g. load default for series)
 
