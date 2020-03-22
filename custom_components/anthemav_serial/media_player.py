@@ -28,7 +28,6 @@ LOG = logging.getLogger(__name__)
 
 DOMAIN = "anthemav_serial"
 
-CONF_SERIAL_PORT = "serial_port"
 CONF_BAUD = "baudrate"
 
 CONF_SERIES = "series"
@@ -71,7 +70,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     name = config.get(CONF_NAME)
     series = config.get(CONF_SERIES)
-    serial_port = config.get(CONF_SERIAL_PORT)
+    serial_port = config.get(CONF_PORT)
     baud = config.get(CONF_BAUD)
 
 #   FIXME: need to pass callback into amp controller to get notifications of changes
