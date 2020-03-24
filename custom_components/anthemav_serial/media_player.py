@@ -77,7 +77,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     # E.g.:
     #  serial_config:
     #    baudrate: 9600
-    serial_config_overrides = config.get(CONF_SERIAL_CONFIG)
+    serial_config = config.get(CONF_SERIAL_CONFIG)
 
 #   FIXME: need to pass callback into amp controller to get notifications of changes
 #    device = None
@@ -87,11 +87,10 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 #        LOG.debug("Update callback from Anthem AVR: %s", message)
 #        hass.async_create_task(device.async_update_ha_state())
 
-
-    LOG.info(f"Provisioning Anthem {series} receiver at {serial_port} ({serial_config_overrides})")
-    amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config=serial_config_overrides)
+    LOG.info(f"Provisioning Anthem {series} receiver at {serial_port} ({serial_config})")
+    amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_config)
     if amp is None:
-        LOG.error(f"Failed to connect to Anthem receiver ({serial_port}; {serial_config_overrides})")
+        LOG.error(f"Failed to connect to Anthem receiver ({serial_port}; {serial_config})")
         return
 
     # FIXME: handle NO zones specified (e.g. load default for series)
