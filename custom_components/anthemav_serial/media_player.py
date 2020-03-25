@@ -105,7 +105,11 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     for zone, extra in config[CONF_ZONES].items():
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} - {name}")
-        devices.append( AnthemAVSerial(amp, zone, name, sources) )
+        entity = AnthemAVSerial(amp, zone, name, sources)
+        devices.append( entity )
+
+        # FIXME: force an update of the amp status
+        await entity.async_update_callback(None)
 
     async_add_entities(devices)
 
@@ -119,11 +123,7 @@ class AnthemAVSerial(MediaPlayerDevice):
         self._zone = zone_id
         self._name = name
         self._sources = sources
-
-        self._last_status = None
-
-        self._input = None
-        # FIXME: zone status
+        self._zone_status = {}        
 
     @property
     def supported_features(self):
@@ -134,11 +134,8 @@ class AnthemAVSerial(MediaPlayerDevice):
     def should_poll(self):
         return True
 
-    @callback
-    async def async_update_callback(self, reason):
-        """Update the device's state."""
+    async def async_update(self):
         self._zone_status = await self._amp.zone_status(self._zone)
-        self.async_schedule_update_ha_state()
 
     @property
     def name(self):
