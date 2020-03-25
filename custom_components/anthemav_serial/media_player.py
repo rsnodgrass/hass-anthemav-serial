@@ -106,6 +106,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} - {name}")
         entity = AnthemAVSerial(amp, zone, name, sources)
+        await entity.async_update()
         devices.append( entity )
 
     async_add_entities(devices)
