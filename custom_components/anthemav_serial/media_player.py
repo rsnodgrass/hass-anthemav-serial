@@ -1,8 +1,9 @@
 """Media Player for Anthem A/V Receivers and Processors that support RS232 communication"""
 import logging
+import voluptuous as vol
 
 from anthemav_serial import get_async_amp_controller
-import voluptuous as vol
+from anthemav_serial.config import DEVICE_CONFIG
 
 from homeassistant.components.media_player import PLATFORM_SCHEMA, MediaPlayerDevice
 from homeassistant.components.media_player.const import (
@@ -130,7 +131,7 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     def should_poll(self):
         """No polling needed."""
-        return True # FIXME: make non-polling at some point (see commeted out callback above)
+        return True # FIXME: make non-polling at some point (see commented out callback above)
 
     @property
     def name(self):
@@ -138,26 +139,39 @@ class AnthemAVSerial(MediaPlayerDevice):
         return self._name
 
     @property
+    def zone_status(self):
+        return self._amp.zone_status(self._zone)
+
+    @property
     def state(self):
         """Return state of power on/off"""
-        pwrstate = self._amp.is_on()
-        if pwrstate is True:
+        status = self.zone_status
+        power = status['power']
+        if power is True:
             return STATE_ON
-        if pwrstate is False:
+        elif power is False:
             return STATE_OFF
+        LOG.warning(f"Could not determine power status for media player {self.name} from: {status}")
         return None
 
     @property
     def is_volume_muted(self):
         """Return boolean reflecting mute state on device"""
-#        return self._lookup("mute", False)
-        return False # FIXME
+        status = self.zone_status
+        mute = status['mute']
+        if mute is True:
+            return STATE_ON
+        elif mute is False:
+            return STATE_OFF
+        LOG.warning(f"Could not determine power status for media player {self.name} from: {status}")
+        return None
 
     @property
     def volume_level(self):
         """Return volume level from 0.0 to 1.0"""
-#        return self._lookup("volume_as_percentage", 0.0)
-        return 0.0 # FIXME
+        volume = self.zone_status['volume']
+        self._amp.set_volume(self._zone, volume)
+        return volume
 
     def volume_up(self):
         return self._amp.volume_up(self._zone)
@@ -168,30 +182,32 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     def media_title(self):
         """Return current input name (closest we have to media title)"""
-        return "No Source" # FIXME?
-        #return self._lookup("input_name", "No Source")
+        return self.source # closest we have to a media title is the current input source
 
     @property
     def app_name(self):
         """Return details about current video and audio stream"""
-        return "Unknown"
+        return self.source # closest we have to a stream name is the current input source
 
     @property
     def source(self):
-        """Return currently selected input"""
-        return "No Source"
-        #return self._lookup("input_name", "Unknown")
+        """Return currently selected input""" # FIXME: by name?
+        source = self.zone_status['source']
+        return self._sources.get(source)
 
     @property
     def source_list(self):
-        """Return all active, configured inputs"""
+        """Return all active, configured input source names"""
         return self._sources.keys()
-        # FIXME: needs to be values()['name']?
 
     async def async_select_source(self, source):
         """Change AVR to the designated source (by name)"""
-        source_id = 1 # FIXME: Find source name to source_id?
-        self._amp.set_source(self._zone, source_id)
+        # FIXME: cache the reverse map
+        for source_id, source_name in self._sources:
+            if source == source_name:
+                self._amp.set_source(self._zone, source_id)
+                return
+        LOG.warning(f"Could not change the media player {self.name} to source {source}")
 
     async def async_turn_off(self):
         self._amp.set_power(self._zone, False)
@@ -201,9 +217,8 @@ class AnthemAVSerial(MediaPlayerDevice):
 
     async def async_set_volume_level(self, volume):
         """Set AVR volume (0.0 to 1.0)"""
-#        self._update_avr("volume_as_percentage", volume)
-        return
+        volume = min(volume,0.6) # FIXME hardcode to maximum 60% volume to protect system
+        self._amp.set_volume(volume)
 
     async def async_mute_volume(self, mute):
-        # FIXME: How do we turn mute off?
-        self._amp.set_mute(self._zone, True)
+        self._amp.set_mute(self._zone, mute)
