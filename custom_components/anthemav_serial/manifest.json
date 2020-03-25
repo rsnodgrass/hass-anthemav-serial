@@ -2,7 +2,7 @@
   "domain": "anthemav_serial",
   "name": "Anthem A/V Receivers (RS232 Serial)",
   "documentation": "https://github.com/rsnodgrass/hass-anthemav-serial/",
-  "requirements": ["anthemav_serial>=0.0.9"],
+  "requirements": ["anthemav_serial>=0.0.10"],
   "dependencies": [],
   "codeowners": ["@rsnodgrass"]
 }
