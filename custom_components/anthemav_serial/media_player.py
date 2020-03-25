@@ -132,6 +132,7 @@ class AnthemAVSerial(MediaPlayerDevice):
         return True
 
     async def async_update(self):
+        LOG.info(f"Updating amp status for zone {self._zone}")
         self._zone_status = await self._amp.zone_status(self._zone)
 
     @property
@@ -142,7 +143,7 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     def state(self):
         """Return state of power on/off"""
-        power = self._zone_status['power']
+        power = self._zone_status.get('power')
         if power is True:
             return STATE_ON
         elif power is False:
@@ -159,7 +160,7 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     async def volume_level(self):
         """Return volume level from 0.0 to 1.0"""
-        return self._zone_status['volume']
+        return self._zone_status.get('volume')
 
     async def async_set_volume_level(self, volume):
         """Set AVR volume (0.0 to 1.0)"""
@@ -175,7 +176,7 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     def is_volume_muted(self):
         """Return boolean reflecting mute state on device"""
-        mute = self._zone_status['mute']
+        mute = self._zone_status.get('mute')
         if mute is True:
             return STATE_ON
         elif mute is False:
@@ -189,7 +190,7 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     def source(self):
         """Return currently selected input""" # FIXME: by name?
-        source = self._zone_status['source']
+        source = self._zone_status.get('source')
         return self._sources.get(source)
 
     @property
