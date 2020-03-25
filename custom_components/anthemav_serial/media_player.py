@@ -108,9 +108,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         entity = AnthemAVSerial(amp, zone, name, sources)
         devices.append( entity )
 
-        # FIXME: force an update of the amp status
-        await entity.async_update_callback(None)
-
     async_add_entities(devices)
 
 class AnthemAVSerial(MediaPlayerDevice):
