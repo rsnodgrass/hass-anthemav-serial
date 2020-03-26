@@ -82,14 +82,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     if not serial_config:
         serial_config = {}
 
-#   FIXME: need to pass callback into amp controller to get notifications of changes
-#    device = None
-#    @callback
-#    def async_anthemav_update_callback(message):
-#        """Update notification that should be called whenever underlying data may have changed."""
-#        LOG.debug("Update callback from Anthem AVR: %s", message)
-#        hass.async_create_task(device.async_update_ha_state())
-
     LOG.info(f"Provisioning Anthem {series} media player at {serial_port} ({serial_config})")
     amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_config)
     if amp is None:
@@ -106,9 +98,11 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} - {name}")
         entity = AnthemAVSerial(amp, zone, name, sources)
+        LOG.info("Awaiting async_update")
         await entity.async_update()
         devices.append( entity )
 
+    LOG.infO("Anthem AV setup complete")
     async_add_entities(devices)
 
 class AnthemAVSerial(MediaPlayerDevice):
@@ -135,6 +129,7 @@ class AnthemAVSerial(MediaPlayerDevice):
     async def async_update(self):
         LOG.info(f"Updating amp status for zone {self._zone}")
         self._zone_status = await self._amp.zone_status(self._zone)
+        LOG.info(f"Status for zone {self._zone} UPDATED!")
 
     @property
     def name(self):
