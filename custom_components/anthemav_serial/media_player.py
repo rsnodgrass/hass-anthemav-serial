@@ -127,7 +127,7 @@ class AnthemAVSerial(MediaPlayerDevice):
 
     async def async_update(self):
         try:
-            LOG.info(f"Attempting update of '{self._name}' zone {self._zone} status")
+            LOG.debug(f"Attempting update of '{self._name}' zone {self._zone} status")
             status = await self._amp.zone_status(self._zone)
 
             if status and status != self._zone_status:
@@ -161,11 +161,15 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     async def volume_level(self):
         """Return volume level from 0.0 to 1.0"""
-        return self._zone_status.get('volume')
+        volume = self._zone_status.get('volume')
+        # if powered off, the device returns no volume level
+        if volume is None:
+            return None
+        return volume
 
     async def async_set_volume_level(self, volume):
         """Set AVR volume (0.0 to 1.0)"""
-        volume = min(volume,0.6) # FIXME hardcode to maximum 60% volume to protect system
+        volume = min(volume, 0.6) # FIXME hardcode to maximum 60% volume to protect system
         await self._amp.set_volume(volume)
 
     async def async_volume_up(self):
@@ -178,12 +182,13 @@ class AnthemAVSerial(MediaPlayerDevice):
     def is_volume_muted(self):
         """Return boolean reflecting mute state on device"""
         mute = self._zone_status.get('mute')
+        if mute is None:
+            return None  # note if powered off, there is no mute field
+
         if mute is True:
             return STATE_ON
         elif mute is False:
             return STATE_OFF
-        LOG.warning(f"Could not determine power status for media player {self.name} from: {self._zone_status}")
-        return None
 
     async def async_mute_volume(self, mute):
         await self._amp.set_mute(self._zone, mute)
@@ -192,6 +197,8 @@ class AnthemAVSerial(MediaPlayerDevice):
     def source(self):
         """Return currently selected input""" # FIXME: by name?
         source = self._zone_status.get('source')
+        if source is None:
+            return None  # note if powered off, there is no source field
         return self._sources.get(source)
 
     @property
