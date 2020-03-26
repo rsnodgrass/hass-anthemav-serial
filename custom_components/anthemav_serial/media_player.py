@@ -115,7 +115,7 @@ class AnthemAVSerial(MediaPlayerDevice):
         self._zone = zone_id
         self._name = name
         self._sources = sources
-        self._zone_status = {}        
+        self._zone_status = {}
 
     @property
     def supported_features(self):
@@ -127,9 +127,12 @@ class AnthemAVSerial(MediaPlayerDevice):
         return True
 
     async def async_update(self):
-        LOG.info(f"Updating amp status for zone {self._zone}")
-        self._zone_status = await self._amp.zone_status(self._zone)
-        LOG.info(f"Status for zone {self._zone} UPDATED!")
+        try:
+            LOG.info(f"Updating amp status for zone {self._zone}")
+            self._zone_status = await self._amp.zone_status(self._zone)
+            LOG.info(f"Status for zone {self._zone} UPDATED!")
+        except Exception as e:
+            LOG.warning("Failure updating amp status for zone {self._zone}: {e}")
 
     @property
     def name(self):
