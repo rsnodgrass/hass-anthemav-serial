@@ -128,11 +128,11 @@ class AnthemAVSerial(MediaPlayerDevice):
 
     async def async_update(self):
         try:
-            LOG.info(f"Updating amp status for zone {self._zone}")
+            LOG.info(f"Attempting update of '{self._name}' zone {self._zone} status")
             self._zone_status = await self._amp.zone_status(self._zone)
-            LOG.info(f"Status for zone {self._zone} UPDATED!")
+            LOG.info(f"Status for zone {self._zone} UPDATED! {self._zone_status}")
         except Exception as e:
-            LOG.warning("Failure updating amp status for zone {self._zone}: {e}")
+            LOG.warning(f"Failure updating '{self._name}' zone {self._zone} status: {e}")
 
     @property
     def name(self):
