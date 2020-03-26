@@ -82,7 +82,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     if not serial_config:
         serial_config = {}
 
-    LOG.info(f"Provisioning Anthem {series} media player at {serial_port} ({serial_config})")
+    LOG.info(f"Provisioning Anthem {series} media player at {serial_port} (serial connection overrides {serial_config})")
     amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_config)
     if amp is None:
         LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_config})")
@@ -98,11 +98,10 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} - {name}")
         entity = AnthemAVSerial(amp, zone, name, sources)
-        LOG.info("Awaiting async_update")
         await entity.async_update()
         devices.append( entity )
 
-    LOG.infO("Anthem AV setup complete")
+    LOG.info("Anthem AV setup complete")
     async_add_entities(devices)
 
 class AnthemAVSerial(MediaPlayerDevice):
