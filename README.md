@@ -107,7 +107,7 @@ Or use the [mini-media-player](https://github.com/kalkih/mini-media-player) for 
 ## Known Issues
 
 * play, pause, prev, and next controls are unsupported
-* AM/FM tuners are unsupported, though an idea to have presets like the following has been considered:
+* AM/FM tuners are unsupported, though an idea to have presets like the following has been considered (with a select_preset service):
 
 ```yaml
 media_player:
@@ -116,12 +116,14 @@ media_player:
 
     presets:
       "Public Radio (KUOW)": { fm: 94.9 }
-      "CBC Radio One":       { am: 690 } 
+      "CBC Radio One":       { am: 690 }
       "KEXP":                { fm: 90.3 }
       "KISS FM":             { fm: 106.1 }
       "KUBE Hip Hop":        { fm: 93.3 }
       "KISW Rock":           { fm: 99.9 }
 ```
+
+
 
 #### Future
 
