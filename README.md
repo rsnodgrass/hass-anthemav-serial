@@ -59,10 +59,11 @@ More advanced configuration example:
 ```yaml
 media_player:
   - platform: anthemav_serial
-    series: avm50
+    name: "Theater Anthem D2v"
+    series: d2v
     port: /dev/ttyUSB0
-    name: "Anthem AVM50v"
     baudrate: 115200
+    scan_interval: 30
 
     zones:
       1:
@@ -77,6 +78,11 @@ media_player:
         name: "Sonos"
 ```
 
+Notes about the above configuration:
+
+* Specifying the zones explicitly allows limiting how many media player instances are created (otherwise one for each of the three zones is created).
+* The default baud rate is based on the series model. If you change the baud rate in HASS, you must also change it in the setup menu on your Anthem device.
+
 To determine zones and source ids, check with the RS232 programming guide from Anthem for your amplifier model. Alternatively, these may be defined in [the series configuration from anthemav_serial](https://github.com/rsnodgrass/python-anthemav-serial/tree/master/anthemav_serial/series).
 
 ### Step 3: Add Lovelace Card
@@ -88,7 +94,7 @@ type: media-control
 entity: media_player.anthem_d2
 ```
 
-Or use the [mini-media-player](https://github.com/kalkih/mini-media-player) for more control over source selection and other amplifiers features.
+Or use the [mini-media-player](https://github.com/kalkih/mini-media-player) for more control over source selection and other amplifier features.
 
 ![Anthem Lovelace Examples](https://github.com/rsnodgrass/hass-anthemav-serial/blob/master/lovelace/mediaplayer.png?raw=true)
 
