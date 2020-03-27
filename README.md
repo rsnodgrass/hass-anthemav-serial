@@ -107,7 +107,7 @@ Or use the [mini-media-player](https://github.com/kalkih/mini-media-player) for 
 ## Known Issues
 
 * play, pause, prev, and next controls are unsupported
-* AM/FM tuners are unsupported, though an idea to have presets like the following has been considered (with a select_preset service or create an input_select listing all presets with callback):
+* AM/FM tuners are unsupported (though this would be useful during Internet outages).  One simple idea (compared to implementing a tuner) is to have presets like the following has been considered (with a select_preset service or create an input_select listing all presets with callback):
 
 ```yaml
 media_player:
