@@ -1,6 +1,7 @@
 """Media Player for Anthem A/V Receivers and Processors that support RS232 communication"""
 import logging
 import voluptuous as vol
+from datetime import timedelta
 
 from anthemav_serial import get_async_amp_controller
 from anthemav_serial.config import DEVICE_CONFIG
@@ -34,6 +35,8 @@ CONF_SERIAL_CONFIG = "serial_config"
 CONF_SERIES = "series"
 CONF_ZONES = "zones"
 CONF_SOURCES = "sources"
+
+SCAN_INTERVAL = timedelta(seconds=120)
 
 # from https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/blackbird/media_player.py
 MEDIA_PLAYER_SCHEMA = vol.Schema({ATTR_ENTITY_ID: cv.comp_entity_ids})
