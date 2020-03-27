@@ -107,7 +107,7 @@ Or use the [mini-media-player](https://github.com/kalkih/mini-media-player) for 
 ## Known Issues
 
 * play, pause, prev, and next controls are unsupported
-* AM/FM tuners are unsupported, though an idea to have presets like the following has been considered (with a select_preset service):
+* AM/FM tuners are unsupported, though an idea to have presets like the following has been considered (with a select_preset service or create an input_select listing all presets with callback):
 
 ```yaml
 media_player:
@@ -123,6 +123,7 @@ media_player:
       "KISW Rock":           { fm: 99.9 }
 ```
 
+This would not be hard to implement as the underlying anthemav_serial library already supports `send_command('fm_tune' { 'channel': 94.9 })`. Rather than input_select, the presets could also just be exposed as sources (which would make it easier to apply to all zones) and auto-populated in the sources for each zone.
 
 
 #### Future
