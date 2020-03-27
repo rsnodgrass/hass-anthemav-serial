@@ -127,12 +127,14 @@ class AnthemAVSerial(MediaPlayerDevice):
 
     @property
     def should_poll(self):
-        return True
+        return False # FIXME
 
     async def async_update(self):
         try:
             LOG.debug(f"Attempting update of '{self._name}' zone {self._zone} status")
-            status = await self._amp.zone_status(self._zone)
+
+            #status = await self._amp.zone_status(self._zone)
+            status = None  # FIXME: testing
 
             if status and status != self._zone_status:
                 self._zone_status = status
