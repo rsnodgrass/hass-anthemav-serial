@@ -106,9 +106,23 @@ Or use the [mini-media-player](https://github.com/kalkih/mini-media-player) for 
 
 ## Known Issues
 
-* AM/FM tuners are unsupported
 * play, pause, prev, and next controls are unsupported
+* AM/FM tuners are unsupported, though an idea to have presets like the following has been considered:
+
+```yaml
+media_player:
+  - platform: anthemav_serial
+    series: d2v
+
+    presets:
+      "Public Radio (KUOW)": { fm: 94.9 }
+      "CBC Radio One":       { am: 690 } 
+      "KEXP":                { fm: 90.3 }
+      "KISS FM":             { fm: 106.1 }
+      "KUBE Hip Hop":        { fm: 93.3 }
+      "KISW Rock":           { fm: 99.9 }
+```
 
 #### Future
 
-* add "snapshot" state like Monoprice (save state to play doorbell, etc)
+* add "snapshot" state like Monoprice (save existing state to play doorbell and then restore)
