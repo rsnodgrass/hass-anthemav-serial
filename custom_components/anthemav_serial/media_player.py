@@ -25,6 +25,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
+# from homeassistant.util import Throttle
 
 LOG = logging.getLogger(__name__)
 
@@ -100,9 +101,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     for zone, extra in config[CONF_ZONES].items():
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} - {name}")
-        entity = AnthemAVSerial(amp, zone, name, sources)
-        await entity.async_update()
-        devices.append( entity )
+#        entity = AnthemAVSerial(amp, zone, name, sources)
+#        await entity.async_update()
+#        devices.append( entity )
 
     LOG.info("Anthem AV setup complete")
     async_add_entities(devices)
