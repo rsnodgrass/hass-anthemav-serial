@@ -3,8 +3,8 @@ import logging
 import voluptuous as vol
 from datetime import timedelta
 
-from anthemav_serial import get_async_amp_controller
-from anthemav_serial.config import DEVICE_CONFIG
+#from anthemav_serial import get_async_amp_controller
+#from anthemav_serial.config import DEVICE_CONFIG
 
 from homeassistant.components.media_player import PLATFORM_SCHEMA, MediaPlayerDevice
 from homeassistant.components.media_player.const import (
@@ -149,7 +149,7 @@ class AnthemAVSerial(MediaPlayerDevice):
                 self._zone_status = status
                 LOG.info(f"Status for zone {self._zone} UPDATED! {self._zone_status}")
         except Exception as e:
-            LOG.warning(f"Failure updating '{self._name}' zone {self._zone} status: {e}")
+            LOG.warning(f"Failed updating '{self._name}' zone {self._zone} status: {e}")
 
     @property
     def name(self) -> str:
@@ -173,10 +173,12 @@ class AnthemAVSerial(MediaPlayerDevice):
         return None
 
     async def async_turn_on(self):
-        await self._amp.set_power(self._zone, True)
+        #await self._amp.set_power(self._zone, True)
+        return
 
     async def async_turn_off(self):
-        await self._amp.set_power(self._zone, False)
+        #await self._amp.set_power(self._zone, False)
+        return
 
     @property
     async def volume_level(self) -> float:
@@ -190,13 +192,15 @@ class AnthemAVSerial(MediaPlayerDevice):
     async def async_set_volume_level(self, volume):
         """Set the volume (0.0 ... 1.0)"""
         volume = min(volume, 0.6) # FIXME hardcode to maximum 60% volume to protect system
-        await self._amp.set_volume(volume)
+        #await self._amp.set_volume(volume)
 
     async def async_volume_up(self):
-        await self._amp.volume_up(self._zone)
+        #await self._amp.volume_up(self._zone)
+        return
 
     async def async_volume_down(self):
-        await self._amp.volume_down(self._zone)
+        #await self._amp.volume_down(self._zone)
+        return
 
     @property
     def is_volume_muted(self) -> bool:
@@ -213,7 +217,8 @@ class AnthemAVSerial(MediaPlayerDevice):
 
     async def async_mute_volume(self, mute):
         """Mute the volumn"""
-        await self._amp.set_mute(self._zone, mute)
+        #await self._amp.set_mute(self._zone, mute)
+        return
 
     @property
     def source(self) -> str:
@@ -224,7 +229,7 @@ class AnthemAVSerial(MediaPlayerDevice):
         return self._sources.get(source)
 
     @property
-    def source_list(self) -> Sequence[str]:
+    def source_list(self):
         """Return all active, configured input source names"""
         return self._sources.keys()
 
@@ -233,6 +238,6 @@ class AnthemAVSerial(MediaPlayerDevice):
         # FIXME: cache the reverse map
         for source_id, source_name in self._sources:
             if source == source_name:
-                await self._amp.set_source(self._zone, source_id)
+                #await self._amp.set_source(self._zone, source_id)
                 return
         LOG.warning(f"Could not change the media player {self.name} to source {source}")
