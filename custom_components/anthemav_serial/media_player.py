@@ -86,11 +86,13 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     if not serial_config:
         serial_config = {}
 
-    LOG.info(f"Provisioning Anthem {series} media player at {serial_port} (serial connection overrides {serial_config})")
-    amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_config)
-    if amp is None:
-        LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_config})")
-        return
+ #   LOG.info(f"Provisioning Anthem {series} media player at {serial_port} (serial connection overrides {serial_config})")
+ #   amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_config)
+ #   if amp is None:
+ #       LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_config})")
+ #       return
+
+    amp = None
 
     # FIXME: handle NO zones specified (e.g. load default for series)
 
