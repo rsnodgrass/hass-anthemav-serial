@@ -24,6 +24,7 @@ from homeassistant.const import (
     STATE_ON,
 )
 from homeassistant.core import callback
+from homeassistant.helpers.typing import HomeAssistantType
 import homeassistant.helpers.config_validation as cv
 # from homeassistant.util import Throttle
 
@@ -70,7 +71,7 @@ SUPPORTED_FEATURES_ANTHEM_SERIAL = (
     | SUPPORT_SELECT_SOURCE   
 )
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass: HomeAssistantType, config, async_add_entities, discovery_info=None):
     """Setup the Anthem media player platform"""
 
     name = config.get(CONF_NAME)
@@ -110,6 +111,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     LOG.info("Anthem AV setup complete")
     async_add_entities(devices)
 
+
+
 class AnthemAVSerial(MediaPlayerDevice):
     """Entity reading values from Anthem AVR interface"""
 
@@ -123,13 +126,17 @@ class AnthemAVSerial(MediaPlayerDevice):
         self._zone_status = {}
 
     @property
-    def supported_features(self):
-        """Return supported media player features"""
+    def supported_features(self) -> int:
+        """Flags indicating supported media player features"""
         return SUPPORTED_FEATURES_ANTHEM_SERIAL
 
     @property
-    def should_poll(self):
+    def should_poll(self) -> bool:
         return False # FIXME
+
+    async def async_added_to_hass(self):
+         """Device added to hass."""
+         LOG.debug("Called async_added_to_hass()")
 
     async def async_update(self):
         try:
@@ -145,12 +152,17 @@ class AnthemAVSerial(MediaPlayerDevice):
             LOG.warning(f"Failure updating '{self._name}' zone {self._zone} status: {e}")
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return name of device."""
         return self._name
 
     @property
-    def state(self):
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return self._name  # FIXME: need to determine unique id of unit
+
+    @property
+    def state(self) -> str:
         """Return state of power on/off"""
         power = self._zone_status.get('power')
         if power is True:
@@ -167,8 +179,8 @@ class AnthemAVSerial(MediaPlayerDevice):
         await self._amp.set_power(self._zone, False)
 
     @property
-    async def volume_level(self):
-        """Return volume level from 0.0 to 1.0"""
+    async def volume_level(self) -> float:
+        """Return volume level (0.0 ... 1.0)"""
         volume = self._zone_status.get('volume')
         # if powered off, the device returns no volume level
         if volume is None:
@@ -176,7 +188,7 @@ class AnthemAVSerial(MediaPlayerDevice):
         return volume
 
     async def async_set_volume_level(self, volume):
-        """Set AVR volume (0.0 to 1.0)"""
+        """Set the volume (0.0 ... 1.0)"""
         volume = min(volume, 0.6) # FIXME hardcode to maximum 60% volume to protect system
         await self._amp.set_volume(volume)
 
@@ -187,11 +199,12 @@ class AnthemAVSerial(MediaPlayerDevice):
         await self._amp.volume_down(self._zone)
 
     @property
-    def is_volume_muted(self):
+    def is_volume_muted(self) -> bool:
         """Return boolean reflecting mute state on device"""
         mute = self._zone_status.get('mute')
         if mute is None:
-            return None  # note if powered off, there is no mute field
+            return STATE_OFF  # note if powered off, there is no mute field
+            # FIXME: should this be None or STATE_OFF?
 
         if mute is True:
             return STATE_ON
@@ -199,23 +212,24 @@ class AnthemAVSerial(MediaPlayerDevice):
             return STATE_OFF
 
     async def async_mute_volume(self, mute):
+        """Mute the volumn"""
         await self._amp.set_mute(self._zone, mute)
 
     @property
-    def source(self):
-        """Return currently selected input""" # FIXME: by name?
+    def source(self) -> str:
+        """Name of the current input source"""
         source = self._zone_status.get('source')
         if source is None:
             return None  # note if powered off, there is no source field
         return self._sources.get(source)
 
     @property
-    def source_list(self):
+    def source_list(self) -> Sequence[str]:
         """Return all active, configured input source names"""
         return self._sources.keys()
 
     async def async_select_source(self, source):
-        """Change AVR to the designated source (by name)"""
+        """Select input source."""
         # FIXME: cache the reverse map
         for source_id, source_name in self._sources:
             if source == source_name:
