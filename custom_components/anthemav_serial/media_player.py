@@ -8,26 +8,24 @@ from datetime import timedelta
 
 from homeassistant.components.media_player import PLATFORM_SCHEMA, MediaPlayerDevice
 from homeassistant.components.media_player.const import (
-    SUPPORT_SELECT_SOURCE,
     SUPPORT_TURN_OFF,
     SUPPORT_TURN_ON,
     SUPPORT_VOLUME_MUTE,
     SUPPORT_VOLUME_SET,
-    SUPPORT_VOLUME_STEP
+    SUPPORT_VOLUME_STEP,
+    SUPPORT_SELECT_SOURCE
 )
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     CONF_NAME,
     CONF_PORT,
-    EVENT_HOMEASSISTANT_STOP,
     STATE_OFF,
-    STATE_ON,
+    STATE_ON
 )
 from homeassistant.core import callback
 from homeassistant.helpers.typing import HomeAssistantType
 import homeassistant.helpers.config_validation as cv
-# from homeassistant.util import Throttle
-
+#
 LOG = logging.getLogger(__name__)
 
 DOMAIN = "anthemav_serial"
@@ -38,14 +36,18 @@ CONF_SERIES = "series"
 CONF_ZONES = "zones"
 CONF_SOURCES = "sources"
 
-SCAN_INTERVAL = timedelta(seconds=120)
+SCAN_INTERVAL = timedelta(seconds=10)
 
 # from https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/blackbird/media_player.py
 MEDIA_PLAYER_SCHEMA = vol.Schema({ATTR_ENTITY_ID: cv.comp_entity_ids})
 
-# FIXME: we can probably skip zones....
 ZONE_SCHEMA = vol.Schema({vol.Required(CONF_NAME): cv.string})
 ZONE_IDS = vol.All(vol.Coerce(int), vol.Range(min=1, max=3))   # valid zones: 1-3
+
+# only create a single main zone for the amp, if none are specified
+DEFAULT_ZONES = {
+    1: { "name": "Main" }
+}
 
 SOURCE_SCHEMA = vol.Schema({vol.Required(CONF_NAME): cv.string})
 SOURCE_IDS = vol.All(vol.Coerce(int), vol.Range(min=1, max=9)) # valid sources: 1-9
@@ -55,7 +57,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_NAME): cv.string,
         vol.Required(CONF_PORT): cv.string,
         vol.Optional(CONF_SERIAL_CONFIG): vol.Schema({}),
-        vol.Required(CONF_SERIES, default="d2"): cv.string,  # FIXME: check if in SUPPORTED_ANTHEM_SERIES
+        vol.Required(CONF_SERIES, default="d2v"): cv.string,
         vol.Required(CONF_ZONES): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
         vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA})
     }
@@ -71,37 +73,49 @@ SUPPORTED_FEATURES_ANTHEM_SERIAL = (
     | SUPPORT_SELECT_SOURCE   
 )
 
-async def async_setup_platform(hass: HomeAssistantType, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass: HomeAssistantType, config, async_add_devices, discovery_info=None):
     """Setup the Anthem media player platform"""
 
-    name = config.get(CONF_NAME)
     series = config.get(CONF_SERIES)
-    serial_port = config.get(CONF_PORT)
+#    if not series in DEVICE_CONFIG:
+#        LOG.error("Invalid series '{series}' specified, no such config in anthemav_serial")
+#        return
 
     # allow configuration of the entire serial_init_args via YAML, instead of hardcoding baud
     #
     # E.g.:
     #  serial_config:
     #    baudrate: 9600
-    serial_config = config.get(CONF_SERIAL_CONFIG)
-    if not serial_config:
-        serial_config = {}
+    serial_port = config.get(CONF_PORT)
+    serial_overrides = config.get(CONF_SERIAL_CONFIG)
+    if not serial_overrides:
+        serial_overrides = {}
 
- #   LOG.info(f"Provisioning Anthem {series} media player at {serial_port} (serial connection overrides {serial_config})")
- #   amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_config)
+ #   LOG.info(f"Provisioning Anthem {series} media player at {serial_port} (serial connection overrides {serial_overrides})")
+ #   amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_overrides)
  #   if amp is None:
- #       LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_config})")
+ #       LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_overrides})")
  #       return
 
     amp = None
 
-    # FIXME: handle NO zones specified (e.g. load default for series)
-
+    # if no sources are defined, then populate with ALL the sources for the specified amp series
     sources = config[CONF_SOURCES]
+    #series_sources = DEVICE_CONFIG[series].get('sources')
+    # FIXME: validate any configured source ids are actually in the series_sources list
+    if sources is None:
+        sources = {}
+#        for id, name in series_sources.items():
+#            sources[id] = name
 
-    # create a media_player device for each zone
+    # if no zones are defined, use the defaults (only single Main zone)
+    zones = config[CONF_ZONES]
+    if zones is None:
+        zones = DEFAULT_ZONES
+
+    # create a separate media_player for each configured zone
     devices = []
-    for zone, extra in config[CONF_ZONES].items():
+    for zone, extra in zones.items():
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} - {name}")
         entity = AnthemAVSerial(amp, zone, name, sources)
@@ -109,18 +123,17 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
         devices.append( entity )
 
     LOG.info("Anthem AV setup complete")
-    async_add_entities(devices)
+    async_add_devices(devices)
 
 
 
 class AnthemAVSerial(MediaPlayerDevice):
     """Entity reading values from Anthem AVR interface"""
 
-    def __init__(self, amp, zone_id, name, sources):
+    def __init__(self, amp, zone, name, sources):
         """Initialize Anthem media player zone"""
-        super().__init__()
         self._amp = amp
-        self._zone = zone_id
+        self._zone = zone
         self._name = name
         self._sources = sources
         self._zone_status = {}
@@ -133,10 +146,6 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     def should_poll(self) -> bool:
         return False # FIXME
-
-    async def async_added_to_hass(self):
-         """Device added to hass."""
-         LOG.debug("Called async_added_to_hass()")
 
     async def async_update(self):
         try:
@@ -157,11 +166,6 @@ class AnthemAVSerial(MediaPlayerDevice):
         return self._name
 
     @property
-    def unique_id(self) -> str:
-        """Return a unique ID."""
-        return self._name  # FIXME: need to determine unique id of unit
-
-    @property
     def state(self) -> str:
         """Return state of power on/off"""
         power = self._zone_status.get('power')
@@ -170,7 +174,7 @@ class AnthemAVSerial(MediaPlayerDevice):
         elif power is False:
             return STATE_OFF
         LOG.warning(f"Could not determine power status for media player {self.name} from: {self._zone_status}")
-        return None
+        return STATE_OFF # FIXME: or None?
 
     async def async_turn_on(self):
         #await self._amp.set_power(self._zone, True)
@@ -186,7 +190,7 @@ class AnthemAVSerial(MediaPlayerDevice):
         volume = self._zone_status.get('volume')
         # if powered off, the device returns no volume level
         if volume is None:
-            return None
+            return 0.0 # FIXME: or None?
         return volume
 
     async def async_set_volume_level(self, volume):
