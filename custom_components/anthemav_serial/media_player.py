@@ -177,10 +177,12 @@ class AnthemAVSerial(MediaPlayerDevice):
         return STATE_OFF # FIXME: or None?
 
     async def async_turn_on(self):
+        LOG.info(f"Turning on amp {self._name} zone {self._zone}")
         #await self._amp.set_power(self._zone, True)
         return
 
     async def async_turn_off(self):
+        LOG.info(f"Turning off amp {self._name} zone {self._zone}")
         #await self._amp.set_power(self._zone, False)
         return
 
@@ -196,13 +198,16 @@ class AnthemAVSerial(MediaPlayerDevice):
     async def async_set_volume_level(self, volume):
         """Set the volume (0.0 ... 1.0)"""
         volume = min(volume, 0.6) # FIXME hardcode to maximum 60% volume to protect system
+        LOG.info(f"Setting volume for amp {self._name} zone {self._zone} to {volume}")
         #await self._amp.set_volume(volume)
 
     async def async_volume_up(self):
+        LOG.info(f"Increasing volume for amp {self._name} zone {self._zone}")
         #await self._amp.volume_up(self._zone)
         return
 
     async def async_volume_down(self):
+        LOG.info(f"Decreasing volume for amp {self._name} zone {self._zone}")
         #await self._amp.volume_down(self._zone)
         return
 
