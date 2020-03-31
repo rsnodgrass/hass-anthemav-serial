@@ -145,7 +145,7 @@ class AnthemAVSerial(MediaPlayerDevice):
 
     @property
     def should_poll(self) -> bool:
-        return True # FIXME: when set ot False this locks up HA somehow
+        return True # FIXME: when set to False this locks up HA???
 
     async def async_update(self):
         try:
@@ -173,7 +173,7 @@ class AnthemAVSerial(MediaPlayerDevice):
             return STATE_ON
         elif power is False:
             return STATE_OFF
-        LOG.warning(f"Could not determine power status for media player {self.name} from: {self._zone_status}")
+        LOG.warning(f"Missing 'power' status for media player {self.name} in zone {self._zone}: {self._zone_status}")
         return STATE_OFF # FIXME: or None?
 
     async def async_turn_on(self):
