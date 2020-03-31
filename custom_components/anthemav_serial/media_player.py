@@ -99,12 +99,12 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
 
     # if no sources are defined, then populate with ALL the sources for the specified amp series
     sources = config[CONF_SOURCES]
-    #series_sources = DEVICE_CONFIG[series].get('sources')
+    series_sources = DEVICE_CONFIG[series].get('sources')
     # FIXME: validate any configured source ids are actually in the series_sources list
     if sources is None:
         sources = {}
-#        for id, name in series_sources.items():
-#            sources[id] = name
+        for id, name in series_sources.items():
+            sources[id] = name
 
     # if no zones are defined, use the defaults (only single Main zone)
     zones = config[CONF_ZONES]
