@@ -91,13 +91,11 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
     if not serial_overrides:
         serial_overrides = {}
 
- #   LOG.info(f"Provisioning Anthem {series} media player at {serial_port} (serial connection overrides {serial_overrides})")
- #   amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_overrides)
- #   if amp is None:
- #       LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_overrides})")
- #       return
-
-    amp = None
+    LOG.info(f"Provisioning Anthem {series} media player at {serial_port} (serial connection overrides {serial_overrides})")
+    amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_overrides)
+    if amp is None:
+        LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_overrides})")
+        return
 
     # if no sources are defined, then populate with ALL the sources for the specified amp series
     sources = config[CONF_SOURCES]
@@ -123,7 +121,9 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
         devices.append( entity )
 
     LOG.info("Anthem AV setup complete")
-    async_add_devices(devices)
+
+    # FIXME: this or direct call?
+    hass.loop.create_task(async_add_devices(devices))
 
 
 
@@ -145,7 +145,7 @@ class AnthemAVSerial(MediaPlayerDevice):
 
     @property
     def should_poll(self) -> bool:
-        return True # FIXME: when set to False this locks up HA???
+        return True # FIXME: when set to False this locks up HA??? (all SyncWorker threads get blocked)
 
     async def async_update(self):
         try:
