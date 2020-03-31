@@ -145,7 +145,7 @@ class AnthemAVSerial(MediaPlayerDevice):
 
     @property
     def should_poll(self) -> bool:
-        return False # FIXME
+        return True # FIXME: when set ot False this locks up HA somehow
 
     async def async_update(self):
         try:
