@@ -123,8 +123,8 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
     LOG.info("Anthem AV setup complete")
 
     # FIXME: this or direct call?
-    hass.loop.create_task(async_add_devices(devices))
-
+    #async_add_devices(devices)
+    #hass.loop.create_task(async_add_devices(devices))
 
 
 class AnthemAVSerial(MediaPlayerDevice):
