@@ -3,8 +3,8 @@ import logging
 import voluptuous as vol
 from datetime import timedelta
 
-#from anthemav_serial import get_async_amp_controller
-#from anthemav_serial.config import DEVICE_CONFIG
+from anthemav_serial import get_async_amp_controller
+from anthemav_serial.config import DEVICE_CONFIG
 
 from homeassistant.components.media_player import PLATFORM_SCHEMA, MediaPlayerDevice
 from homeassistant.components.media_player.const import (
@@ -77,9 +77,9 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
     """Setup the Anthem media player platform"""
 
     series = config.get(CONF_SERIES)
-#    if not series in DEVICE_CONFIG:
-#        LOG.error("Invalid series '{series}' specified, no such config in anthemav_serial")
-#        return
+    if not series in DEVICE_CONFIG:
+        LOG.error("Invalid series '{series}' specified, no such config in anthemav_serial")
+        return
 
     # allow configuration of the entire serial_init_args via YAML, instead of hardcoding baud
     #
