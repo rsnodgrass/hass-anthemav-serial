@@ -117,7 +117,7 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} - {name}")
         entity = AnthemAVSerial(amp, zone, name, sources)
-#        await entity.async_update()
+        await entity.async_update()
         devices.append( entity )
 
     LOG.info("Anthem AV setup complete")
