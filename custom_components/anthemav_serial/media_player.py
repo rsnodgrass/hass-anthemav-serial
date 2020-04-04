@@ -97,6 +97,11 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
         LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_overrides})")
         return
 
+    # wait for amp to be ready
+    LOG.warning("Checking amp status")
+    result = await amp.zone_status(1)
+    LOG.warning(f"Amp status: {result}")
+
     # if no sources are defined, then populate with ALL the sources for the specified amp series
     sources = config[CONF_SOURCES]
     series_sources = DEVICE_CONFIG[series].get('sources')
@@ -120,7 +125,7 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
         await entity.async_update()
         devices.append( entity )
 
-    LOG.info("Setup of Anthem AV {name} complete")
+    LOG.info(f"Setup of Anthem '{name}' complete")
 
     # FIXME: this or direct call?
     async_add_devices(devices)
@@ -157,6 +162,8 @@ class AnthemAVSerial(MediaPlayerDevice):
             if status and status != self._zone_status:
                 self._zone_status = status
                 LOG.info(f"Status for zone {self._zone} UPDATED! {self._zone_status}")
+
+            LOG.debug(f"Finished update of '{self._name}' zone {self._zone} status")
         except Exception as e:
             LOG.warning(f"Failed updating '{self._name}' zone {self._zone} status: {e}")
 
@@ -168,12 +175,14 @@ class AnthemAVSerial(MediaPlayerDevice):
     @property
     def state(self) -> str:
         """Return state of power on/off"""
+        LOG.debug(f"Power state of '{self._name}' zone {self._zone} status")
         power = self._zone_status.get('power')
+        LOG.debug(f"Found state of '{self._name}' zone {self._zone} status: power {power}")
         if power is True:
             return STATE_ON
         elif power is False:
             return STATE_OFF
-        LOG.warning(f"Missing 'power' status for media player {self.name} in zone {self._zone}: {self._zone_status}")
+        LOG.warning(f"Missing {self.name}/zone {self._zone} power status: {self._zone_status}")
         return STATE_OFF # FIXME: or None?
 
     async def async_turn_on(self):
@@ -247,6 +256,6 @@ class AnthemAVSerial(MediaPlayerDevice):
         # FIXME: cache the reverse map
         for source_id, source_name in self._sources:
             if source == source_name:
-                #await self._amp.set_source(self._zone, source_id)
+                await self._amp.set_source(self._zone, source_id)
                 return
         LOG.warning(f"Could not change the media player {self.name} to source {source}")
