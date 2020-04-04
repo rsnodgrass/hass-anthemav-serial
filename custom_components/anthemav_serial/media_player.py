@@ -97,7 +97,7 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
         LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_overrides})")
         return
 
-    # wait for amp to be ready
+    # check if amp is connected (if not, ignore this amp?)
     LOG.warning("Checking amp status")
     result = await amp.zone_status(1)
     LOG.warning(f"Amp status: {result}")
