@@ -156,9 +156,7 @@ class AnthemAVSerial(MediaPlayerDevice):
         try:
             LOG.debug(f"Attempting update of '{self._name}' zone {self._zone} status")
 
-            #status = await self._amp.zone_status(self._zone)
-            status = None  # FIXME: testing
-
+            status = await self._amp.zone_status(self._zone)
             if status and status != self._zone_status:
                 self._zone_status = status
                 LOG.info(f"Status for zone {self._zone} UPDATED! {self._zone_status}")
