@@ -120,10 +120,10 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
         await entity.async_update()
         devices.append( entity )
 
-    LOG.info("Anthem AV setup complete")
+    LOG.info("Setup of Anthem AV {name} complete")
 
     # FIXME: this or direct call?
-    #async_add_devices(devices)
+    async_add_devices(devices)
     #hass.loop.create_task(async_add_devices(devices))
 
 
