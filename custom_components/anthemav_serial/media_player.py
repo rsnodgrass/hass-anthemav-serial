@@ -138,7 +138,7 @@ class AnthemAVSerial(MediaPlayerDevice):
         self._zone = zone
         self._name = name
         self._sources = sources
-        LOG.info(f"Setting up {sources} for zone {zone}")
+        LOG.info(f"Setting up {name} one {zone}: {sources}")
         self._source_names_to_id = {}
         for zone_id, name in self._sources.items():
             self._source_names_to_id[name] = zone_id
@@ -244,15 +244,16 @@ class AnthemAVSerial(MediaPlayerDevice):
         if source is None:
             return None  # note if powered off, there is no source field
 
-        data = self._sources[source]
+        data = self._sources.get(source)
         if not data:
-            return None
+            return f"Unknown {source}"
         return data['name']
 
     @property
     def source_list(self):
         """Return all active, configured input source names"""
-        return self._source_names_to_id.keys()
+        LOG.info(f"Return sources {self._source_names_to_id.keys()}")
+        return None
 
     async def async_select_source(self, source):
         """Select input source."""
