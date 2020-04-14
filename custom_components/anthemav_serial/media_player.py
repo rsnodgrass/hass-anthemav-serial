@@ -108,8 +108,8 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
     # FIXME: validate any configured source ids are actually in the series_sources list
     if sources is None:
         sources = {}
-        for id, name in series_sources.items():
-            sources[id] = name
+        for id, data in series_sources.items():
+            sources[id] = data['name']
     LOG.info(f"{series} sources: {sources}")
 
     # if no zones are defined, use the defaults (only single Main zone)
@@ -137,8 +137,8 @@ class AnthemAVSerial(MediaPlayerDevice):
         self._name = name
         self._sources = sources
         self._source_names_to_id = {}
-        for id, data in self._sources:
-            self._source_names_to_id[data['name']] = id
+        for id, name in self._sources:
+            self._source_names_to_id[name] = id
 
         self._zone_status = {}
 
