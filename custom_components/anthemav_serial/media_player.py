@@ -73,7 +73,7 @@ SUPPORTED_FEATURES_ANTHEM_SERIAL = (
     | SUPPORT_SELECT_SOURCE   
 )
 
-async def async_setup_platform(hass: HomeAssistantType, config, async_add_devices, discovery_info=None):
+async def async_setup_platform(hass: HomeAssistantType, config, async_add_entities, discovery_info=None):
     """Setup the Anthem media player platform"""
 
     series = config.get(CONF_SERIES)
@@ -110,6 +110,7 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
         sources = {}
         for id, name in series_sources.items():
             sources[id] = name
+    LOG.info(f"{series} sources: {sources}")
 
     # if no zones are defined, use the defaults (only single Main zone)
     zones = config[CONF_ZONES]
@@ -117,20 +118,14 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_device
         zones = DEFAULT_ZONES
 
     # create a separate media_player for each configured zone
-    devices = []
+    entities = []
     for zone, extra in zones.items():
         name = extra[CONF_NAME]
-        LOG.info(f"Adding {series} zone {zone} - {name}")
-        entity = AnthemAVSerial(amp, zone, name, sources)
-        await entity.async_update()
-        devices.append( entity )
+        LOG.info(f"Adding {series} zone {zone} ({name})")
+        entities.append( AnthemAVSerial(amp, zone, name, sources) )
 
-    LOG.info(f"Setup of Anthem '{name}' complete")
-
-    # FIXME: this or direct call?
-    async_add_devices(devices)
-    #hass.loop.create_task(async_add_devices(devices))
-
+    async_add_entities(entities)
+    LOG.info(f"Setup of Anthem {series} complete")
 
 class AnthemAVSerial(MediaPlayerDevice):
     """Entity reading values from Anthem AVR interface"""
@@ -141,16 +136,20 @@ class AnthemAVSerial(MediaPlayerDevice):
         self._zone = zone
         self._name = name
         self._sources = sources
+        self._source_names_to_id = {}
+        for id, data in self._sources:
+            self._source_names_to_id[data['name']] = id
+
         self._zone_status = {}
 
     @property
-    def supported_features(self) -> int:
+    def supported_features(self):
         """Flags indicating supported media player features"""
         return SUPPORTED_FEATURES_ANTHEM_SERIAL
 
     @property
-    def should_poll(self) -> bool:
-        return True # FIXME: when set to False this locks up HA??? (all SyncWorker threads get blocked)
+    def should_poll(self):
+        return True
 
     async def async_update(self):
         try:
@@ -165,12 +164,12 @@ class AnthemAVSerial(MediaPlayerDevice):
             LOG.warning(f"Failed updating '{self._name}' zone {self._zone} status: {e}")
 
     @property
-    def name(self) -> str:
+    def name(self):
         """Return name of device."""
         return self._name
 
     @property
-    def state(self) -> str:
+    def state(self):
         """Return state of power on/off"""
         LOG.debug(f"Power state of '{self._name}' zone {self._zone} status")
         power = self._zone_status.get('power')
@@ -193,7 +192,7 @@ class AnthemAVSerial(MediaPlayerDevice):
         return
 
     @property
-    async def volume_level(self) -> float:
+    async def volume_level(self):
         """Return volume level (0.0 ... 1.0)"""
         volume = self._zone_status.get('volume')
         # if powered off, the device returns no volume level
@@ -218,7 +217,7 @@ class AnthemAVSerial(MediaPlayerDevice):
         return
 
     @property
-    def is_volume_muted(self) -> bool:
+    def is_volume_muted(self):
         """Return boolean reflecting mute state on device"""
         mute = self._zone_status.get('mute')
         if mute is None:
@@ -231,35 +230,32 @@ class AnthemAVSerial(MediaPlayerDevice):
             return STATE_OFF
 
     async def async_mute_volume(self, mute):
-        """Mute the volumn"""
+        """Mute the volume"""
         #await self._amp.set_mute(self._zone, mute)
         return
 
     @property
-    def source(self) -> str:
+    def source(self):
         """Name of the current input source"""
         source = self._zone_status.get('source')
         if source is None:
             return None  # note if powered off, there is no source field
-        return self._sources.get(source)
+
+        data = self._sources[source]
+        if not data:
+            return None
+        return data['name']
 
     @property
     def source_list(self):
         """Return all active, configured input source names"""
-        return self._sources.keys()
+        return self._source_names_to_id.keys()
 
     async def async_select_source(self, source):
         """Select input source."""
         # FIXME: cache the reverse map
-        for source_id, source_name in self._sources:
+        for source_name, source_id in self._source_names_to_id:
             if source == source_name:
                 await self._amp.set_source(self._zone, source_id)
                 return
         LOG.warning(f"Could not change the media player {self.name} to source {source}")
-
-    @property
-    def icon(self):
-        if self.state == STATE_OFF or self.is_volume_muted:
-            return 'mdi:speaker-off'
-        else:
-            return 'mdi:speaker'
