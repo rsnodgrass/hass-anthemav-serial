@@ -107,10 +107,12 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
     series_sources = DEVICE_CONFIG[series].get('sources')
     # FIXME: validate any configured source ids are actually in the series_sources list
     if sources is None:
-        sources = {}
-        for id, data in series_sources.items():
-            sources[id] = data['name']
-    LOG.info(f"{series} sources: {sources}")
+        sources = series_sources
+
+    flattened_sources = {}
+    for zone_id, data in sources.items():
+        flattened_sources[zone_id] = data['name']
+    LOG.info(f"{series} sources: {flattened_sources}")
 
     # if no zones are defined, use the defaults (only single Main zone)
     zones = config[CONF_ZONES]
@@ -122,7 +124,7 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
     for zone, extra in zones.items():
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} ({name})")
-        entities.append( AnthemAVSerial(amp, zone, name, sources) )
+        entities.append( AnthemAVSerial(amp, zone, name, flattened_sources) )
 
     async_add_entities(entities)
     LOG.info(f"Setup of Anthem {series} complete")
@@ -136,9 +138,10 @@ class AnthemAVSerial(MediaPlayerDevice):
         self._zone = zone
         self._name = name
         self._sources = sources
+        LOG.info(f"Setting up {sources} for zone {zone}")
         self._source_names_to_id = {}
-        for id, name in self._sources:
-            self._source_names_to_id[name] = id
+        for zone_id, name in self._sources.items():
+            self._source_names_to_id[name] = zone_id
 
         self._zone_status = {}
 
