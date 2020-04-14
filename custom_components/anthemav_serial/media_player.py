@@ -155,7 +155,6 @@ class AnthemAVSerial(MediaPlayerDevice):
     async def async_update(self):
         try:
             LOG.debug(f"Attempting update of '{self._name}' zone {self._zone} status")
-
             status = await self._amp.zone_status(self._zone)
             if status and status != self._zone_status:
                 self._zone_status = status
@@ -257,3 +256,10 @@ class AnthemAVSerial(MediaPlayerDevice):
                 await self._amp.set_source(self._zone, source_id)
                 return
         LOG.warning(f"Could not change the media player {self.name} to source {source}")
+
+    @property
+    def icon(self):
+        if self.state == STATE_OFF or self.is_volume_muted:
+            return 'mdi:speaker-off'
+        else:
+            return 'mdi:speaker'
