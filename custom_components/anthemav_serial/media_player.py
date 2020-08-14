@@ -6,7 +6,7 @@ from datetime import timedelta
 from anthemav_serial import get_async_amp_controller
 from anthemav_serial.config import DEVICE_CONFIG
 
-from homeassistant.components.media_player import PLATFORM_SCHEMA, MediaPlayerDevice
+from homeassistant.components.media_player import PLATFORM_SCHEMA, MediaPlayerEntity
 from homeassistant.components.media_player.const import (
     SUPPORT_TURN_OFF,
     SUPPORT_TURN_ON,
@@ -25,12 +25,10 @@ from homeassistant.const import (
 from homeassistant.core import callback
 from homeassistant.helpers.typing import HomeAssistantType
 import homeassistant.helpers.config_validation as cv
-#
+
+from . import DOMAIN, CONF_SERIAL_CONFIG
+
 LOG = logging.getLogger(__name__)
-
-DOMAIN = "anthemav_serial"
-
-CONF_SERIAL_CONFIG = "serial_config"
 
 CONF_SERIES = "series"
 CONF_ZONES = "zones"
@@ -66,11 +64,11 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 SUPPORTED_FEATURES_ANTHEM_SERIAL = (
     SUPPORT_VOLUME_SET
     | SUPPORT_VOLUME_MUTE
-    | SUPPORT_VOLUME_STEP
-    | SUPPORT_VOLUME_MUTE
-    | SUPPORT_TURN_ON
-    | SUPPORT_TURN_OFF
-    | SUPPORT_SELECT_SOURCE   
+#    | SUPPORT_VOLUME_STEP
+#    | SUPPORT_VOLUME_MUTE
+#    | SUPPORT_TURN_ON
+#    | SUPPORT_TURN_OFF
+#    | SUPPORT_SELECT_SOURCE   
 )
 
 async def async_setup_platform(hass: HomeAssistantType, config, async_add_entities, discovery_info=None):
@@ -124,12 +122,14 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
     for zone, extra in zones.items():
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} ({name})")
-        entities.append( AnthemAVSerial(amp, zone, name, flattened_sources) )
+        entity = AnthemAVSerial(amp, zone, name, flattened_sources)
+        await entity.async_update()
+        entities.append( entity )
 
     async_add_entities(entities)
     LOG.info(f"Setup of Anthem {series} complete")
 
-class AnthemAVSerial(MediaPlayerDevice):
+class AnthemAVSerial(MediaPlayerEntity):
     """Entity reading values from Anthem AVR interface"""
 
     def __init__(self, amp, zone, name, sources):
@@ -138,12 +138,20 @@ class AnthemAVSerial(MediaPlayerDevice):
         self._zone = zone
         self._name = name
         self._sources = sources
-        LOG.info(f"Setting up {name} one {zone}: {sources}")
+
+        self._unique_id = "{DOMAIN}_{zone}"
+
+        LOG.info(f"Setting up {name} one {zone}: {sources} - {self.entity_id} / unique = {self.unique_id}")
         self._source_names_to_id = {}
         for zone_id, name in self._sources.items():
             self._source_names_to_id[name] = zone_id
 
         self._zone_status = {}
+
+    @property
+    def unique_id(self):
+        """Return unique ID for this device."""
+        return self._unique_id
 
     @property
     def supported_features(self):
@@ -156,13 +164,10 @@ class AnthemAVSerial(MediaPlayerDevice):
 
     async def async_update(self):
         try:
-            LOG.debug(f"Attempting update of '{self._name}' zone {self._zone} status")
             status = await self._amp.zone_status(self._zone)
             if status and status != self._zone_status:
                 self._zone_status = status
                 LOG.info(f"Status for zone {self._zone} UPDATED! {self._zone_status}")
-
-            LOG.debug(f"Finished update of '{self._name}' zone {self._zone} status")
         except Exception as e:
             LOG.warning(f"Failed updating '{self._name}' zone {self._zone} status: {e}")
 
@@ -182,16 +187,16 @@ class AnthemAVSerial(MediaPlayerDevice):
         elif power is False:
             return STATE_OFF
         LOG.warning(f"Missing {self.name}/zone {self._zone} power status: {self._zone_status}")
-        return STATE_OFF # FIXME: or None?
+        return STATE_OFF
 
     async def async_turn_on(self):
         LOG.info(f"Turning on amp {self._name} zone {self._zone}")
-        #await self._amp.set_power(self._zone, True)
+        await self._amp.set_power(self._zone, True)
         return
 
     async def async_turn_off(self):
         LOG.info(f"Turning off amp {self._name} zone {self._zone}")
-        #await self._amp.set_power(self._zone, False)
+        await self._amp.set_power(self._zone, False)
         return
 
     @property
@@ -234,26 +239,29 @@ class AnthemAVSerial(MediaPlayerDevice):
 
     async def async_mute_volume(self, mute):
         """Mute the volume"""
-        #await self._amp.set_mute(self._zone, mute)
+        await self._amp.set_mute(self._zone, mute)
         return
 
     @property
     def source(self):
         """Name of the current input source"""
-        source = self._zone_status.get('source')
-        if source is None:
+        source_id = self._zone_status.get('source')
+        if source_id is None:
             return None  # note if powered off, there is no source field
 
-        data = self._sources.get(source)
-        if not data:
-            return f"Unknown {source}"
-        return data['name']
+        name = self._sources.get(source_id)
+        if not name:
+            # dynamically add, if this souce hasn't been configured
+            name = f"Source {source_id}"
+            self._sources[source_id] = name
+            self._source_names_to_id[name] = source_id
+        return name
 
-    @property
-    def source_list(self):
-        """Return all active, configured input source names"""
-        LOG.info(f"Return sources {self._source_names_to_id.keys()}")
-        return None
+   # @property
+   # def source_list(self):
+   #     """Return all active, configured input source names"""
+   #     LOG.info(f"Return sources {self._source_names_to_id.keys()}")
+   #     return None
 
     async def async_select_source(self, source):
         """Select input source."""
