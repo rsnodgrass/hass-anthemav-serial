@@ -1,1 +1,1 @@
-"""Home Assistant anthemav_serial component"""
+"""Home Assistant Anthem AV RS232 serial integration"""

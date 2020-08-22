@@ -1,4 +1,4 @@
-# Anthem A/V Receivers (RS232 Serial Connection)
+# Anthem A/V Receivers (RS232 Serial Control)
 
 ![Anthem Logo](https://github.com/rsnodgrass/hass-anthemav-serial/blob/master/anthemav.png?raw=true)
 

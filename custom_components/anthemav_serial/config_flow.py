@@ -6,11 +6,9 @@ import voluptuous as vol
 from homeassistant import config_entries, core
 from homeassistant.const import CONF_TIMEOUT
 
-from .const import DOMAIN  # pylint:disable=unused-import; pylint:disable=unused-import
+from .const import DOMAIN, CONF_TTY  # pylint:disable=unused-import; pylint:disable=unused-import
 
 LOG = logging.getLogger(__name__)
-
-CONF_TTY='tty'
 
 DATA_SCHEMA = vol.Schema(
     {

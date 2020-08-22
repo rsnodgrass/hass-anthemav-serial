@@ -26,13 +26,9 @@ from homeassistant.core import callback
 from homeassistant.helpers.typing import HomeAssistantType
 import homeassistant.helpers.config_validation as cv
 
-from . import DOMAIN, CONF_SERIAL_CONFIG
+from .const import DOMAIN, CONF_SERIAL_CONFIG, CONF_SERIES, CONF_ZONES, CONF_SOURCES
 
 LOG = logging.getLogger(__name__)
-
-CONF_SERIES = "series"
-CONF_ZONES = "zones"
-CONF_SOURCES = "sources"
 
 SCAN_INTERVAL = timedelta(seconds=10)
 
@@ -44,7 +40,7 @@ ZONE_IDS = vol.All(vol.Coerce(int), vol.Range(min=1, max=3))   # valid zones: 1-
 
 # only create a single main zone for the amp, if none are specified
 DEFAULT_ZONES = {
-    1: { "name": "Main" }
+    1: { "name": "Main" }  # FIXME: translate
 }
 
 SOURCE_SCHEMA = vol.Schema({vol.Required(CONF_NAME): cv.string})
