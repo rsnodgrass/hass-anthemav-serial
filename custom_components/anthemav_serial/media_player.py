@@ -85,16 +85,15 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
     if not serial_overrides:
         serial_overrides = {}
 
-    LOG.info(f"Provisioning Anthem {series} media player at {serial_port} (serial connection overrides {serial_overrides})")
+    LOG.info(f"Provisioning Anthem {series} media player at {serial_port} (overrides={serial_overrides})")
     amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_overrides)
     if amp is None:
         LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_overrides})")
         return
 
     # check if amp is connected (if not, ignore this amp?)
-    LOG.warning("Checking amp status")
     result = await amp.zone_status(1)
-    LOG.warning(f"Amp status: {result}")
+    LOG.info(f"Initial {series} amp status: {result}")
 
     # if no sources are defined, then populate with ALL the sources for the specified amp series
     sources = config[CONF_SOURCES]
@@ -118,12 +117,12 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
     for zone, extra in zones.items():
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} ({name})")
-        entity = AnthemAVSerial(amp, zone, name, flattened_sources)
-        await entity.async_update()
-        entities.append( entity )
+        #entity = AnthemAVSerial(amp, zone, name, flattened_sources)
+        #await entity.async_update()
+        #entities.append( entity )
 
     async_add_entities(entities)
-    LOG.info(f"Setup of Anthem {series} complete")
+    LOG.info(f"Setup of {series} complete: {flattened_sources}")
 
 class AnthemAVSerial(MediaPlayerEntity):
     """Entity reading values from Anthem AVR interface"""
@@ -135,7 +134,7 @@ class AnthemAVSerial(MediaPlayerEntity):
         self._name = name
         self._sources = sources
 
-        self._unique_id = "{DOMAIN}_{zone}"
+        self._unique_id = f"{DOMAIN}_{zone}"
 
         LOG.info(f"Setting up {name} one {zone}: {sources} - {self.entity_id} / unique = {self.unique_id}")
         self._source_names_to_id = {}
