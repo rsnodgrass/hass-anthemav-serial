@@ -121,7 +121,7 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
         #await entity.async_update()
         #entities.append( entity )
 
-    async_add_entities(entities)
+    await async_add_entities(entities)
     LOG.info(f"Setup of {series} complete: {flattened_sources}")
 
 class AnthemAVSerial(MediaPlayerEntity):
