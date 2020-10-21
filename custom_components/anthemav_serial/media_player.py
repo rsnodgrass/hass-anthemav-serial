@@ -234,6 +234,7 @@ class AnthemAVSerial(MediaPlayerEntity):
 
     async def async_volume_up(self):
         LOG.info(f"Increasing volume for {self._name} (zone {self._zone})")
+        # FIXME: need to ensure this also limits to the max_volume setting
         await self._amp.volume_up(self._zone)
         return
 
@@ -284,9 +285,8 @@ class AnthemAVSerial(MediaPlayerEntity):
 
     async def async_select_source(self, source):
         """Select input source."""
-        # FIXME: cache the reverse map
         for source_name, source_id in self._source_names_to_id:
             if source == source_name:
                 await self._amp.set_source(self._zone, source_id)
                 return
-        LOG.warning(f"Could not change the media player {self.name} to source {source}")
+        LOG.warning(f"Cannot change media player {self.name} to source {source}, source not found!")
