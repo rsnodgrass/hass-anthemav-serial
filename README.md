@@ -64,6 +64,7 @@ media_player:
     port: /dev/ttyUSB0
     baudrate: 115200
     scan_interval: 30
+    serial_number: 136025
 
     zones:
       1:
@@ -82,6 +83,7 @@ Notes about the above configuration:
 
 * Specifying the zones explicitly allows limiting how many media player instances are created (otherwise one for each of the three zones is created).
 * The default baud rate is based on the series model. If you change the baud rate in HASS, you must also change it in the setup menu on your Anthem device.
+* The serial number is set to create a unique id for each amp. This is required when multiple amps are configured in a system and you want to use Home Assistant's advanced UI features for managing device information.  The default serial number is 000000.
 
 To determine zones and source ids, check with the RS232 programming guide from Anthem for your amplifier model. Alternatively, these may be defined in [the series configuration from anthemav_serial](https://github.com/rsnodgrass/python-anthemav-serial/tree/master/anthemav_serial/series).
 
