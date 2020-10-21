@@ -122,7 +122,6 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} ({name})")
         entity = AnthemAVSerial(amp, serial_number, zone, name, flattened_sources)
-        #await entity.async_update()
         entities.append( entity )
 
     if entities:
@@ -171,7 +170,7 @@ class AnthemAVSerial(MediaPlayerEntity):
                 self._zone_status = status
                 LOG.info(f"Status for zone {self._zone} UPDATED! {self._zone_status}")
         except Exception as e:
-            LOG.warning(f"Failed updating '{self._name}' zone {self._zone} status: {e}")
+            LOG.warning(f"Failed updating '{self._name}' (zone {self._zone}) status: {e}")
 
     @property
     def name(self):
@@ -184,11 +183,11 @@ class AnthemAVSerial(MediaPlayerEntity):
         LOG.debug(f"Power state of '{self._name}' ({self.entity_id}) zone {self._zone}")
         power = self._zone_status.get('power')
         LOG.debug(f"Found state of '{self._name}' zone {self._zone} status: power {power}")
-        if power is True:
+        if power == True:
             return STATE_ON
-        elif power is False:
+        elif power == False:
             return STATE_OFF
-        LOG.warning(f"Missing {self.name}/zone {self._zone} power status: {self._zone_status}")
+        LOG.warning(f"Missing {self.name} (zone {self._zone}) power status: {self._zone_status}")
         return STATE_OFF
 
     async def async_turn_on(self):
@@ -213,17 +212,17 @@ class AnthemAVSerial(MediaPlayerEntity):
     async def async_set_volume_level(self, volume):
         """Set the volume (0.0 ... 1.0)"""
         volume = min(volume, 0.6) # FIXME hardcode to maximum 60% volume to protect system
-        LOG.info(f"Setting volume for amp {self._name} zone {self._zone} to {volume}")
-        #await self._amp.set_volume(volume)
+        LOG.info(f"Setting volume for {self._name} (zone {self._zone}) to {volume}")
+        await self._amp.set_volume(volume)
 
     async def async_volume_up(self):
-        LOG.info(f"Increasing volume for amp {self._name} zone {self._zone}")
-        #await self._amp.volume_up(self._zone)
+        LOG.info(f"Increasing volume for {self._name} (zone {self._zone})")
+        await self._amp.volume_up(self._zone)
         return
 
     async def async_volume_down(self):
-        LOG.info(f"Decreasing volume for amp {self._name} zone {self._zone}")
-        #await self._amp.volume_down(self._zone)
+        LOG.info(f"Decreasing volume for {self._name} (zone {self._zone})")
+        await self._amp.volume_down(self._zone)
         return
 
     @property
