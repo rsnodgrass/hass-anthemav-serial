@@ -37,18 +37,22 @@ SCAN_INTERVAL = timedelta(seconds=10)
 MEDIA_PLAYER_SCHEMA = vol.Schema({ATTR_ENTITY_ID: cv.comp_entity_ids})
 
 # FIXME: add a configurable limit to the max volume
-CONF_VOLUME_PROTECTION='volume_protection'
-VOLUME_PROTECTION_SCHEMA = vol.All(vol.Coerce(int), vol.Range(min=2, max=20))
+CONF_MAX_VOLUME = 'max_volume'
+DEFAULT_MAX_VOLUME = 0.6
+MAX_VOLUME_SCHEMA = vol.All(vol.Coerce(float), vol.Range(min=0.0, max=1.0))
 
 ZONE_SCHEMA = vol.Schema({
     vol.Required(CONF_NAME): cv.string,
-    vol.Optional(CONF_VOLUME_PROTECTION, default='60'): VOLUME_PROTECTION_SCHEMA,
+    vol.Optional(CONF_MAX_VOLUME, default=DEFAULT_MAX_VOLUME): MAX_VOLUME_SCHEMA,
 })
 ZONE_IDS = vol.All(vol.Coerce(int), vol.Range(min=1, max=3))   # valid zones: 1-3
 
-# only create a single main zone for the amp, if none are specified
-DEFAULT_ZONES = {
-    1: { "name": "Main" }  # FIXME: translation
+# if no zones are specified default to a single main zone for the amp
+DEFAULT_ZONE_CONFIG = {
+    1: {
+        CONF_NAME: "Main", # FIXME: translation
+        CONF_MAX_VOLUME: DEFAULT_MAX_VOLUME
+       }  
 }
 
 SOURCE_SCHEMA = vol.Schema({vol.Required(CONF_NAME): cv.string})
@@ -59,7 +63,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_PORT): cv.string,
     vol.Optional(CONF_SERIAL_CONFIG): vol.Schema({}),
     vol.Required(CONF_SERIES, default="d2v"): cv.string,
-    vol.Required(CONF_ZONES): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
+    vol.Optional(CONF_ZONES, default=DEFAULT_ZONE_CONFIG): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
     vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA}),
     vol.Optional(CONF_SERIAL_NUMBER, default='000000'): cv.string
 })
@@ -114,20 +118,17 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
         flattened_sources[zone_id] = data['name']
     LOG.info(f"{series} sources: {flattened_sources}")
 
-    # if no zones are defined, use the defaults (only single Main zone)
     zones = config[CONF_ZONES]
-    if zones is None:
-        zones = DEFAULT_ZONES
 
     # TODO: get the Anthem's serial number using the IDN? query (only applies to newer Anthem amps with V2 protocol)
     serial_number = config[CONF_SERIAL_NUMBER]
 
     # create a separate media_player for each configured zone
     entities = []
-    for zone, extra in zones.items():
-        name = extra[CONF_NAME]
+    for zone, zone_config in zones.items():
+        name = zone_config[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} ({name})")
-        entity = AnthemAVSerial(config, amp, serial_number, zone, name, flattened_sources)
+        entity = AnthemAVSerial(zone_config, amp, serial_number, zone, name, flattened_sources)
         entities.append( entity )
 
         # trigger an immediate update
@@ -156,6 +157,9 @@ class AnthemAVSerial(MediaPlayerEntity):
             self._source_names_to_id[name] = zone_id
 
         self._zone_status = {}
+        self._attr = {
+            CONF_MAX_VOLUME: float(self._config.get(CONF_MAX_VOLUME)
+        }
 
     @property
     def unique_id(self):
@@ -217,8 +221,10 @@ class AnthemAVSerial(MediaPlayerEntity):
         return float(volume)
 
     async def async_set_volume_level(self, volume):
-        """Set the volume (0.0 ... 1.0)"""
-        volume = min(volume, 0.6) # FIXME: hardcode to maximum 60% volume to protect system (allow config override?)
+        """Set the volume (0.0 ... 1.0)
+           NOte that the default max_volume is 60% of the volume.
+        """
+        volume = min(volume, float(self._config.get(CONF_MAX_VOLUME))) 
         LOG.info(f"Setting volume for {self._name} (zone {self._zone}) to {volume}")
         await self._amp.set_volume(volume)
 
