@@ -124,6 +124,9 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
         entity = AnthemAVSerial(amp, serial_number, zone, name, flattened_sources)
         entities.append( entity )
 
+        # trigger an immediate update
+        await entity.async_update()
+
     if entities:
         await async_add_entities(entities)
     LOG.info(f"Setup of {series} (serial number={serial_number}) complete: {flattened_sources}: {entities}")
@@ -145,9 +148,7 @@ class AnthemAVSerial(MediaPlayerEntity):
         for zone_id, name in self._sources.items():
             self._source_names_to_id[name] = zone_id
 
-        # trigger an immediate update
         self._zone_status = {}
-        await self.async_update()
 
     @property
     def unique_id(self):
