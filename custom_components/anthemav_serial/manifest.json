@@ -1,6 +1,6 @@
 {
   "domain": "anthemav_serial",
-  "name": "Anthem A/V Receivers (RS232 Serial)",
+  "name": "Anthem AV Preamp/Receiver (RS232 Serial)",
   "documentation": "https://github.com/rsnodgrass/hass-anthemav-serial/",
   "requirements": ["anthemav_serial>=0.2.7"],
   "dependencies": [],
