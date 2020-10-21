@@ -36,7 +36,6 @@ SCAN_INTERVAL = timedelta(seconds=10)
 # from https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/blackbird/media_player.py
 MEDIA_PLAYER_SCHEMA = vol.Schema({ATTR_ENTITY_ID: cv.comp_entity_ids})
 
-# FIXME: add a configurable limit to the max volume
 CONF_MAX_VOLUME = 'max_volume'
 DEFAULT_MAX_VOLUME = 0.6
 MAX_VOLUME_SCHEMA = vol.All(vol.Coerce(float), vol.Range(min=0.0, max=1.0))
@@ -221,11 +220,16 @@ class AnthemAVSerial(MediaPlayerEntity):
         return float(volume)
 
     async def async_set_volume_level(self, volume):
-        """Set the volume (0.0 ... 1.0)
-           NOte that the default max_volume is 60% of the volume.
-        """
-        volume = min(volume, float(self._config.get(CONF_MAX_VOLUME))) 
-        LOG.info(f"Setting volume for {self._name} (zone {self._zone}) to {volume}")
+        """Set the volume (0.0 ... 1.0)"""
+
+        # enforce the max_volume level setting
+        max_volume = float(self._config.get(CONF_MAX_VOLUME))
+        if volume > max_volume:
+            LOG.info("Volume setting {volume} is higher than the {self._name} (zone {self._zone}) max_volume {max_volume}, limiting it to {max_volume}")
+            volume = max_volume
+        else
+            LOG.info(f"Setting volume for {self._name} (zone {self._zone}) to {volume}")
+
         await self._amp.set_volume(volume)
 
     async def async_volume_up(self):
