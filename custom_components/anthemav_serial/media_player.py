@@ -266,7 +266,7 @@ class AnthemAVSerial(MediaPlayerEntity):
         """Name of the current input source"""
         source_id = self._zone_status.get('source')
         if source_id is None:
-            return None  # note if powered off, there is no source field
+            return None # NOTE: if powered off, there is no source field
 
         name = self._sources.get(source_id)
         if not name:
@@ -285,7 +285,7 @@ class AnthemAVSerial(MediaPlayerEntity):
     async def async_select_source(self, source):
         """Select input source."""
         for source_name, source_id in self._source_names_to_id:
-            if source == source_name:
+            if source_name == source:
                 await self._amp.set_source(self._zone, source_id)
                 return
         LOG.warning(f"Cannot change media player {self.name} to source {source}, source not found!")
