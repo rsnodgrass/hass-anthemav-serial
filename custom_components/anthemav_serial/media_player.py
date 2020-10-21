@@ -107,14 +107,15 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
 
     # if no sources are defined, then populate with ALL the sources for the specified amp series
     sources = config[CONF_SOURCES]
-    series_sources = DEVICE_CONFIG[series].get('sources')
+    series_sources = DEVICE_CONFIG[series].get(CONF_SOURCES)
+
     # FIXME: validate any configured source ids are actually in the series_sources list
     if sources is None:
         sources = series_sources
 
     flattened_sources = {}
     for zone_id, data in sources.items():
-        flattened_sources[zone_id] = data['name']
+        flattened_sources[zone_id] = data[CONF_NAME]
     LOG.info(f"{series} sources: {flattened_sources}")
 
     zones = config[CONF_ZONES]
@@ -157,7 +158,7 @@ class AnthemAVSerial(MediaPlayerEntity):
 
         self._zone_status = {}
         self._attr = {
-            CONF_MAX_VOLUME: float(self._config.get(CONF_MAX_VOLUME)
+            CONF_MAX_VOLUME: float(self._config.get(CONF_MAX_VOLUME))
         }
 
     @property
