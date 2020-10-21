@@ -26,7 +26,7 @@ from homeassistant.core import callback
 from homeassistant.helpers.typing import HomeAssistantType
 import homeassistant.helpers.config_validation as cv
 
-from .const import DOMAIN, CONF_SERIAL_CONFIG, CONF_SERIES, CONF_ZONES, CONF_SOURCES
+from .const import DOMAIN, CONF_SERIAL_CONFIG, CONF_SERIAL_NUMBER, CONF_SERIES, CONF_ZONES, CONF_SOURCES
 
 LOG = logging.getLogger(__name__)
 
@@ -53,18 +53,19 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_SERIAL_CONFIG): vol.Schema({}),
         vol.Required(CONF_SERIES, default="d2v"): cv.string,
         vol.Required(CONF_ZONES): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
-        vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA})
+        vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA}),
+        vol.Optional(CONF_SERIAL_NUMBER, default="000000"): cv.string
     }
 )
 
 SUPPORTED_FEATURES_ANTHEM_SERIAL = (
     SUPPORT_VOLUME_SET
     | SUPPORT_VOLUME_MUTE
-#    | SUPPORT_VOLUME_STEP
-#    | SUPPORT_VOLUME_MUTE
-#    | SUPPORT_TURN_ON
-#    | SUPPORT_TURN_OFF
-#    | SUPPORT_SELECT_SOURCE   
+    | SUPPORT_VOLUME_STEP
+    | SUPPORT_VOLUME_MUTE
+    | SUPPORT_TURN_ON
+    | SUPPORT_TURN_OFF
+    | SUPPORT_SELECT_SOURCE   
 )
 
 async def async_setup_platform(hass: HomeAssistantType, config, async_add_entities, discovery_info=None):
@@ -112,30 +113,33 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
     if zones is None:
         zones = DEFAULT_ZONES
 
+    # TODO: get the Anthem's serial number using the IDN? query (only applies to newer Anthem amps with V2 protocol)
+    serial_number = config[CONF_SERIAL_NUMBER]
+
     # create a separate media_player for each configured zone
     entities = []
     for zone, extra in zones.items():
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} ({name})")
-        entity = AnthemAVSerial(amp, zone, name, flattened_sources)
+        entity = AnthemAVSerial(amp, serial_number, zone, name, flattened_sources)
         #await entity.async_update()
         entities.append( entity )
 
     if entities:
         await async_add_entities(entities)
-    LOG.info(f"Setup of {series} complete: {flattened_sources}: {entities}")
+    LOG.info(f"Setup of {series} (serial number={serial_number}) complete: {flattened_sources}: {entities}")
 
 class AnthemAVSerial(MediaPlayerEntity):
     """Entity reading values from Anthem AVR interface"""
 
-    def __init__(self, amp, zone, name, sources):
+    def __init__(self, amp, serial_number, zone, name, sources):
         """Initialize Anthem media player zone"""
         self._amp = amp
         self._zone = zone
         self._name = name
         self._sources = sources
 
-        self._unique_id = f"{DOMAIN}_{zone}"
+        self._unique_id = f"{DOMAIN}_{serial_number}_{zone}"
 
         LOG.info(f"Setting up {name} one {zone}: {sources} - {self.entity_id} / unique = {self.unique_id}")
         self._source_names_to_id = {}
