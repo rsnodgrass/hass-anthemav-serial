@@ -5,6 +5,7 @@ from datetime import timedelta
 
 from anthemav_serial import get_async_amp_controller
 from anthemav_serial.config import DEVICE_CONFIG
+#from anthemav_serial.const import MUTE_KEY, VOLUME_KEY, POWER_KEY, SOURCE_KEY, ZONE_KEY                                                          
 
 from homeassistant.components.media_player import PLATFORM_SCHEMA, MediaPlayerEntity
 from homeassistant.components.media_player.const import (
@@ -35,28 +36,33 @@ SCAN_INTERVAL = timedelta(seconds=10)
 # from https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/blackbird/media_player.py
 MEDIA_PLAYER_SCHEMA = vol.Schema({ATTR_ENTITY_ID: cv.comp_entity_ids})
 
-ZONE_SCHEMA = vol.Schema({vol.Required(CONF_NAME): cv.string})
+# FIXME: add a configurable limit to the max volume
+CONF_VOLUME_PROTECTION='volume_protection'
+VOLUME_PROTECTION_SCHEMA = vol.All(vol.Coerce(int), vol.Range(min=2, max=20))
+
+ZONE_SCHEMA = vol.Schema({
+    vol.Required(CONF_NAME): cv.string,
+    vol.Optional(CONF_VOLUME_PROTECTION, default='60'): VOLUME_PROTECTION_SCHEMA,
+})
 ZONE_IDS = vol.All(vol.Coerce(int), vol.Range(min=1, max=3))   # valid zones: 1-3
 
 # only create a single main zone for the amp, if none are specified
 DEFAULT_ZONES = {
-    1: { "name": "Main" }  # FIXME: translate
+    1: { "name": "Main" }  # FIXME: translation
 }
 
 SOURCE_SCHEMA = vol.Schema({vol.Required(CONF_NAME): cv.string})
 SOURCE_IDS = vol.All(vol.Coerce(int), vol.Range(min=1, max=9)) # valid sources: 1-9
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {
-        vol.Optional(CONF_NAME): cv.string,
-        vol.Required(CONF_PORT): cv.string,
-        vol.Optional(CONF_SERIAL_CONFIG): vol.Schema({}),
-        vol.Required(CONF_SERIES, default="d2v"): cv.string,
-        vol.Required(CONF_ZONES): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
-        vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA}),
-        vol.Optional(CONF_SERIAL_NUMBER, default="000000"): cv.string
-    }
-)
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
+    vol.Optional(CONF_NAME): cv.string,
+    vol.Required(CONF_PORT): cv.string,
+    vol.Optional(CONF_SERIAL_CONFIG): vol.Schema({}),
+    vol.Required(CONF_SERIES, default="d2v"): cv.string,
+    vol.Required(CONF_ZONES): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
+    vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA}),
+    vol.Optional(CONF_SERIAL_NUMBER, default='000000'): cv.string
+})
 
 SUPPORTED_FEATURES_ANTHEM_SERIAL = (
     SUPPORT_VOLUME_SET
@@ -73,7 +79,7 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
 
     series = config.get(CONF_SERIES)
     if not series in DEVICE_CONFIG:
-        LOG.error("Invalid series '{series}' specified, no such config in anthemav_serial")
+        LOG.error("Invalid series '{series}' specified, no protocol provided by anthemav_serial")
         return
 
     # allow configuration of the entire serial_init_args via YAML, instead of hardcoding baud
@@ -121,11 +127,11 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
     for zone, extra in zones.items():
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} ({name})")
-        entity = AnthemAVSerial(amp, serial_number, zone, name, flattened_sources)
+        entity = AnthemAVSerial(config, amp, serial_number, zone, name, flattened_sources)
         entities.append( entity )
 
         # trigger an immediate update
-        await entity.async_update()
+        #await entity.async_update()
 
     if entities:
         await async_add_entities(entities)
@@ -134,8 +140,9 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
 class AnthemAVSerial(MediaPlayerEntity):
     """Entity reading values from Anthem AVR interface"""
 
-    def __init__(self, amp, serial_number, zone, name, sources):
+    def __init__(self, config, amp, serial_number, zone, name, sources):
         """Initialize Anthem media player zone"""
+        self._config = config
         self._amp = amp
         self._zone = zone
         self._name = name
@@ -206,12 +213,12 @@ class AnthemAVSerial(MediaPlayerEntity):
         volume = self._zone_status.get('volume')
         # if powered off, the device returns no volume level
         if volume is None:
-            return 0.0 # FIXME: or None?
-        return volume
+            return None
+        return float(volume)
 
     async def async_set_volume_level(self, volume):
         """Set the volume (0.0 ... 1.0)"""
-        volume = min(volume, 0.6) # FIXME hardcode to maximum 60% volume to protect system
+        volume = min(volume, 0.6) # FIXME: hardcode to maximum 60% volume to protect system (allow config override?)
         LOG.info(f"Setting volume for {self._name} (zone {self._zone}) to {volume}")
         await self._amp.set_volume(volume)
 
@@ -253,6 +260,7 @@ class AnthemAVSerial(MediaPlayerEntity):
         name = self._sources.get(source_id)
         if not name:
             # dynamically add, if this souce hasn't been configured
+            # FIXME: use translations!
             name = f"Source {source_id}"
             self._sources[source_id] = name
             self._source_names_to_id[name] = source_id
