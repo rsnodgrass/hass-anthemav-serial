@@ -146,7 +146,9 @@ class AnthemAVSerial(MediaPlayerEntity):
         for zone_id, name in self._sources.items():
             self._source_names_to_id[name] = zone_id
 
+        # trigger an immediate update
         self._zone_status = {}
+        await self.async_update()
 
     @property
     def unique_id(self):
@@ -179,7 +181,7 @@ class AnthemAVSerial(MediaPlayerEntity):
     @property
     def state(self):
         """Return state of power on/off"""
-        LOG.debug(f"Power state of '{self._name}' zone {self._zone} status")
+        LOG.debug(f"Power state of '{self._name}' ({self.entity_id}) zone {self._zone}")
         power = self._zone_status.get('power')
         LOG.debug(f"Found state of '{self._name}' zone {self._zone} status: power {power}")
         if power is True:
@@ -257,11 +259,11 @@ class AnthemAVSerial(MediaPlayerEntity):
             self._source_names_to_id[name] = source_id
         return name
 
-   # @property
-   # def source_list(self):
-   #     """Return all active, configured input source names"""
-   #     LOG.info(f"Return sources {self._source_names_to_id.keys()}")
-   #     return None
+    @property
+    def source_list(self):
+        """Return all active, configured input source names"""
+        LOG.error(f"Not implemented!! Return sources {self._source_names_to_id.keys()}")
+        return None
 
     async def async_select_source(self, source):
         """Select input source."""
