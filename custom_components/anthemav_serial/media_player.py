@@ -117,12 +117,13 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
     for zone, extra in zones.items():
         name = extra[CONF_NAME]
         LOG.info(f"Adding {series} zone {zone} ({name})")
-        #entity = AnthemAVSerial(amp, zone, name, flattened_sources)
+        entity = AnthemAVSerial(amp, zone, name, flattened_sources)
         #await entity.async_update()
-        #entities.append( entity )
+        entities.append( entity )
 
-    await async_add_entities(entities)
-    LOG.info(f"Setup of {series} complete: {flattened_sources}")
+    if entities:
+        await async_add_entities(entities)
+    LOG.info(f"Setup of {series} complete: {flattened_sources}: {entities}")
 
 class AnthemAVSerial(MediaPlayerEntity):
     """Entity reading values from Anthem AVR interface"""
