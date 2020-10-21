@@ -181,15 +181,14 @@ class AnthemAVSerial(MediaPlayerEntity):
     @property
     def state(self):
         """Return state of power on/off"""
-        LOG.debug(f"Power state of '{self._name}' ({self.entity_id}) zone {self._zone}")
         power = self._zone_status.get('power')
-        LOG.debug(f"Found state of '{self._name}' zone {self._zone} status: power {power}")
+        LOG.debug(f"Found power '{power}' state for '{self._name}' zone {self._zone} status")
         if power == True:
             return STATE_ON
         elif power == False:
             return STATE_OFF
-        LOG.warning(f"Missing {self.name} (zone {self._zone}) power status: {self._zone_status}")
-        return STATE_OFF
+        LOG.warning(f"Missing {self.name} zone {self._zone} power status: {self._zone_status}")
+        return None
 
     async def async_turn_on(self):
         LOG.info(f"Turning on amp {self._name} zone {self._zone}")
