@@ -280,8 +280,7 @@ class AnthemAVSerial(MediaPlayerEntity):
     @property
     def source_list(self):
         """Return all active, configured input source names"""
-        LOG.error(f"Not implemented!! Return sources {self._source_names_to_id.keys()}")
-        return None
+        return self._source_names_to_id.keys()
 
     async def async_select_source(self, source):
         """Select input source."""
