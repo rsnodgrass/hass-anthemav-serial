@@ -1,5 +1,7 @@
 {
-    "default_source_name": "Source {source_id}",
-    "default_zone_name": "Zone {zone_id}",
-    "main_zone_name": "Main"
+    "defaults": {
+	"source_name": "Source {source_id}",
+	"zone_name": "Zone {zone_id}",
+	"main_zone_name": "Main"
+    }
 }

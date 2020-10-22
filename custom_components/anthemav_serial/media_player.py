@@ -228,7 +228,7 @@ class AnthemAVSerial(MediaPlayerEntity):
         if volume > max_volume:
             LOG.warning("Volume setting {volume} is higher than the {self._name} (zone {self._zone}) max_volume {max_volume}, limiting it to {max_volume}")
             volume = max_volume
-        else
+        else:
             LOG.info(f"Setting volume for {self._name} (zone {self._zone}) to {volume}")
 
         await self._amp.set_volume(volume)
