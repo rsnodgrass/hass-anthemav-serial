@@ -1,11 +1,12 @@
 """Media Player for Anthem A/V Receivers and Processors that support RS232 communication"""
+
 import logging
 import voluptuous as vol
 from datetime import timedelta
 
 from anthemav_serial import get_async_amp_controller
 from anthemav_serial.config import DEVICE_CONFIG
-#from anthemav_serial.const import MUTE_KEY, VOLUME_KEY, POWER_KEY, SOURCE_KEY, ZONE_KEY                                                          
+#from anthemav_serial.const import MUTE_KEY, VOLUME_KEY, POWER_KEY, SOURCE_KEY, ZONE_KEY
 
 from homeassistant.components.media_player import PLATFORM_SCHEMA, MediaPlayerEntity
 from homeassistant.components.media_player.const import (
@@ -249,12 +250,12 @@ class AnthemAVSerial(MediaPlayerEntity):
         """Return boolean reflecting mute state on device"""
         mute = self._zone_status.get('mute')
         if mute is None:
-            return STATE_OFF  # note if powered off, there is no mute field
+            return STATE_ON  # note if powered off, the amp is "muted"
             # FIXME: should this be None or STATE_OFF?
 
-        if mute is True:
+        if mute == True:
             return STATE_ON
-        elif mute is False:
+        elif mute == False:
             return STATE_OFF
 
     async def async_mute_volume(self, mute):
@@ -281,7 +282,8 @@ class AnthemAVSerial(MediaPlayerEntity):
     @property
     def source_list(self):
         """Return all active, configured input source names"""
-        return self._source_names_to_id.keys()
+        #return self._source_names_to_id.keys()
+        return None
 
     async def async_select_source(self, source):
         """Select input source."""
