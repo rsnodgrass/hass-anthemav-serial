@@ -128,6 +128,7 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
     entities = []
     for zone, zone_config in zones.items():
         name = zone_config[CONF_NAME]
+
         LOG.info(f"Adding {series} zone {zone} ({name})")
         entity = AnthemAVSerial(zone_config, amp, serial_number, zone, name, flattened_sources)
         entities.append( entity )
@@ -268,11 +269,11 @@ class AnthemAVSerial(MediaPlayerEntity):
         """Name of the current input source"""
         source_id = self._zone_status.get('source')
         if source_id is None:
-            return None # NOTE: if powered off, there is no source field
+            return None # NOTE: if powered off, there is no source
 
         name = self._sources.get(source_id)
         if not name:
-            # dynamically add, if this souce hasn't been configured
+            # dynamically add a source, if the current source wasn't configured by the user
             # FIXME: use translations!
             name = f"Source {source_id}"
             self._sources[source_id] = name
