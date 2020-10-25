@@ -61,7 +61,7 @@ SOURCE_IDS = vol.All(vol.Coerce(int), vol.Range(min=1, max=9)) # valid sources: 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_NAME): cv.string,
     vol.Required(CONF_PORT): cv.string,
-    vol.Optional(CONF_SERIAL_CONFIG): vol.Schema({}),
+    vol.Optional(CONF_SERIAL_CONFIG, default={}): vol.Schema({}),
     vol.Required(CONF_SERIES, default="d2v"): cv.string,
     vol.Optional(CONF_ZONES, default=DEFAULT_ZONE_CONFIG): vol.Schema({ZONE_IDS: ZONE_SCHEMA}),
     vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA}),
@@ -69,12 +69,12 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 SUPPORTED_FEATURES_ANTHEM_SERIAL = (
-    SUPPORT_VOLUME_SET
+    SUPPORT_TURN_ON
+    | SUPPORT_TURN_OFF
+    | SUPPORT_VOLUME_SET
     | SUPPORT_VOLUME_MUTE
     | SUPPORT_VOLUME_STEP
     | SUPPORT_VOLUME_MUTE
-    | SUPPORT_TURN_ON
-    | SUPPORT_TURN_OFF
     | SUPPORT_SELECT_SOURCE   
 )
 
@@ -93,41 +93,33 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
     #    baudrate: 9600
     serial_port = config.get(CONF_PORT)
     serial_overrides = config.get(CONF_SERIAL_CONFIG)
-    if not serial_overrides:
-        serial_overrides = {}
 
     LOG.info(f"Provisioning Anthem {series} media player at {serial_port} (overrides={serial_overrides})")
+
+    # FIXME: This is what blocks the event loop (later accesses of amp)
     amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_overrides)
-    if amp is None:
-        LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_overrides})")
-        return
+    #if amp is None:
+    #    LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_overrides})")
+    #    return
+    #amp = None
 
-    # check if amp is connected (if not, ignore this amp?)
-    result = await amp.zone_status(1)
-    LOG.info(f"Initial {series} amp status: {result}")
-
-    # if no sources are defined, then populate with ALL the sources for the specified amp series
-    sources = config[CONF_SOURCES]
-    series_sources = DEVICE_CONFIG[series].get(CONF_SOURCES)
-
-    # FIXME: validate any configured source ids are actually in the series_sources list
-    if sources is None:
-        sources = series_sources
+    # if no sources are configured by user, default to ALL the sources for the specified amp series
+    sources = config.get(CONF_SOURCES, DEVICE_CONFIG[series].get(CONF_SOURCES))
 
     flattened_sources = {}
     for zone_id, data in sources.items():
         flattened_sources[zone_id] = data[CONF_NAME]
-    LOG.info(f"{series} sources: {flattened_sources}")
+    LOG.info(f"Configuring {series} sources: {flattened_sources}")
 
     zones = config[CONF_ZONES]
 
-    # TODO: get the Anthem's serial number using the IDN? query (only applies to newer Anthem amps with V2 protocol)
+    # TODO: for Anthems with V2 protocol, default to serial number from IDN? query
     serial_number = config[CONF_SERIAL_NUMBER]
 
-    # create a separate media_player for each configured zone
+    # create a media_player for each configured zone
     entities = []
     for zone, zone_config in zones.items():
-        name = zone_config[CONF_NAME]
+        name = zone_config.get(CONF_NAME, f"Zone {zone}")
 
         LOG.info(f"Adding {series} zone {zone} ({name})")
         entity = AnthemAVSerial(zone_config, amp, serial_number, zone, name, flattened_sources)
@@ -136,6 +128,7 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
         # trigger an immediate update
         #await entity.async_update()
 
+    LOG.warning(f"WHAT entities={entities} / {async_add_entities}")
     if entities:
         await async_add_entities(entities)
     LOG.info(f"Setup of {series} (serial number={serial_number}) complete: {flattened_sources}: {entities}")
@@ -179,7 +172,8 @@ class AnthemAVSerial(MediaPlayerEntity):
 
     async def async_update(self):
         try:
-            status = await self._amp.zone_status(self._zone)
+            status = None
+            #status = await self._amp.zone_status(self._zone)
             if status and status != self._zone_status:
                 self._zone_status = status
                 LOG.info(f"Status for zone {self._zone} UPDATED! {self._zone_status}")
@@ -283,7 +277,7 @@ class AnthemAVSerial(MediaPlayerEntity):
     @property
     def source_list(self):
         """Return all active, configured input source names"""
-        #return self._source_names_to_id.keys()
+        return self._source_names_to_id.keys()
         return None
 
     async def async_select_source(self, source):
