@@ -98,10 +98,11 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
 
     # FIXME: This is what blocks the event loop (later accesses of amp)
     amp = await get_async_amp_controller(series, serial_port, hass.loop, serial_config_overrides=serial_overrides)
-    #if amp is None:
-    #    LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_overrides})")
-    #    return
+    if amp is None:
+        LOG.error(f"Failed to connect to Anthem media player ({serial_port}; {serial_overrides})")
+        return
     #amp = None
+    LOG.info(f"amp 3 = {amp}")
 
     # if no sources are configured by user, default to ALL the sources for the specified amp series
     sources = config.get(CONF_SOURCES, DEVICE_CONFIG[series].get(CONF_SOURCES))
@@ -125,10 +126,8 @@ async def async_setup_platform(hass: HomeAssistantType, config, async_add_entiti
         entity = AnthemAVSerial(zone_config, amp, serial_number, zone, name, flattened_sources)
         entities.append( entity )
 
-    LOG.warning(f"WHAT entities={entities} / {async_add_entities}")
-#    async_add_entities(entities, update_before_add=True)
-    async_add_entities(entities)
-    LOG.info(f"Setup of {series} (serial number={serial_number}) complete: {flattened_sources}: {entities}")
+    async_add_entities(entities, update_before_add=True)
+    LOG.info(f"Setup of Anthem {series} (SN={serial_number}) complete: {flattened_sources} / {entities}")
 
 class AnthemAVSerial(MediaPlayerEntity):
     """Entity reading values from Anthem AVR interface"""
@@ -136,7 +135,7 @@ class AnthemAVSerial(MediaPlayerEntity):
     def __init__(self, config, amp, serial_number, zone, name, sources):
         """Initialize Anthem media player zone"""
         self._config = config
-        self._amp = amp
+        #self._amp = amp
         self._zone = zone
         self._name = name
         self._sources = sources
@@ -149,6 +148,7 @@ class AnthemAVSerial(MediaPlayerEntity):
             self._source_names_to_id[name] = zone_id
 
         self._zone_status = {}
+        self._zone_status['power'] = 'Maybe'
         self._attr = {
             CONF_MAX_VOLUME: float(self._config.get(CONF_MAX_VOLUME))
         }
@@ -168,12 +168,13 @@ class AnthemAVSerial(MediaPlayerEntity):
         return True
 
     async def async_update(self):
+        return
+
         try:
-            status = None
-            #status = await self._amp.zone_status(self._zone)
-            if status and status != self._zone_status:
+            status = await self._amp.zone_status(self._zone)
+            if status:
                 self._zone_status = status
-                LOG.info(f"Status for zone {self._zone} UPDATED! {self._zone_status}")
+            LOG.debug(f"Status updated for zone {self._zone}: {self._zone_status}")
         except Exception as e:
             LOG.warning(f"Failed updating '{self._name}' (zone {self._zone}) status: {e}")
 
@@ -185,8 +186,10 @@ class AnthemAVSerial(MediaPlayerEntity):
     @property
     def state(self):
         """Return state of power on/off"""
+        return None
+
         power = self._zone_status.get('power')
-        LOG.debug(f"Found power '{power}' state for '{self._name}' zone {self._zone} status")
+        LOG.debug(f"Found power={power} status for {self._name} (zone {self._zone})")
         if power == True:
             return STATE_ON
         elif power == False:
@@ -205,7 +208,7 @@ class AnthemAVSerial(MediaPlayerEntity):
         return
 
     @property
-    async def volume_level(self):
+    def volume_level(self):
         """Return volume level (0.0 ... 1.0)"""
         volume = self._zone_status.get('volume')
         # if powered off, the device returns no volume level
@@ -275,7 +278,6 @@ class AnthemAVSerial(MediaPlayerEntity):
     def source_list(self):
         """Return all active, configured input source names"""
         return self._source_names_to_id.keys()
-        return None
 
     async def async_select_source(self, source):
         """Select input source."""
