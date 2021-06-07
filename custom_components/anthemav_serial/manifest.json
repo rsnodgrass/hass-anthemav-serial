@@ -1,8 +1,10 @@
 {
   "domain": "anthemav_serial",
   "name": "Anthem Preamp/Receivers (RS232 Serial)",
+  "version": "0.0.1",
   "documentation": "https://github.com/rsnodgrass/hass-anthemav-serial/",
   "requirements": ["anthemav_serial>=0.4"],
   "dependencies": [],
-  "codeowners": ["@rsnodgrass"]
+  "codeowners": ["@rsnodgrass"],
+  "iot_class": "local_polling"
 }
