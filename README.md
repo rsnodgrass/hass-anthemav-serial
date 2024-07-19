@@ -135,3 +135,7 @@ This would not be hard to implement as the underlying anthemav_serial library al
 #### Future
 
 * add "snapshot" state like Monoprice (save existing state to play doorbell and then restore)
+
+## See Also
+
+* [RS232 to USB cable](https://www.amazon.com/RS232-to-USB/dp/B0759HSLP1?tag=carreramfi-20)
