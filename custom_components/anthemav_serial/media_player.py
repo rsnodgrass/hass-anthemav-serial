@@ -21,7 +21,6 @@ from homeassistant.const import (
     STATE_OFF,
     STATE_ON,
 )
-from homeassistant.core import callback
 from homeassistant.helpers.typing import HomeAssistantType
 
 from anthemav_serial import get_async_amp_controller
@@ -97,7 +96,7 @@ async def async_setup_platform(
     """Setup the Anthem media player platform"""
 
     series = config.get(CONF_SERIES)
-    if not series in DEVICE_CONFIG:
+    if series not in DEVICE_CONFIG:
         LOG.error(
             "Invalid series '{series}' specified, no protocol provided by anthemav_serial"
         )
@@ -232,12 +231,10 @@ class AnthemAVSerial(MediaPlayerEntity):
     async def async_turn_on(self):
         LOG.info(f"Turning on amp {self._name} zone {self._zone}")
         await self._amp.set_power(self._zone, True)
-        return
 
     async def async_turn_off(self):
         LOG.info(f"Turning off amp {self._name} zone {self._zone}")
         await self._amp.set_power(self._zone, False)
-        return
 
     @property
     def volume_level(self):
@@ -267,12 +264,10 @@ class AnthemAVSerial(MediaPlayerEntity):
         LOG.info(f"Increasing volume for {self._name} (zone {self._zone})")
         # FIXME: need to ensure this also limits to the max_volume setting
         await self._amp.volume_up(self._zone)
-        return
 
     async def async_volume_down(self):
         LOG.info(f"Decreasing volume for {self._name} (zone {self._zone})")
         await self._amp.volume_down(self._zone)
-        return
 
     @property
     def is_volume_muted(self):
@@ -290,7 +285,6 @@ class AnthemAVSerial(MediaPlayerEntity):
     async def async_mute_volume(self, mute):
         """Mute the volume"""
         await self._amp.set_mute(self._zone, mute)
-        return
 
     @property
     def source(self):
