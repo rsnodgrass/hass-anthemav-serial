@@ -71,9 +71,7 @@ class AnthemAVSerialCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]
 
             # default to 3 zones for most Anthem receivers
             self._zones = [1, 2, 3]
-            LOG.debug(
-                'Loaded config for %s: sources=%s', self._series, self._sources
-            )
+            LOG.debug('Loaded config for %s: sources=%s', self._series, self._sources)
 
     @property
     def amp(self) -> Any | None:

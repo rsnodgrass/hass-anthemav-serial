@@ -17,6 +17,7 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
@@ -41,6 +42,17 @@ from .const import (
 
 LOG = logging.getLogger(__name__)
 
+# Human-readable labels for receiver series
+SERIES_OPTIONS: list[SelectOptionDict] = [
+    SelectOptionDict(value='d1', label='D1 Series'),
+    SelectOptionDict(value='d2', label='D2 Series'),
+    SelectOptionDict(value='d2v', label='D2v Series'),
+    SelectOptionDict(value='avm20', label='AVM 20'),
+    SelectOptionDict(value='avm30', label='AVM 30'),
+    SelectOptionDict(value='avm50', label='AVM 50'),
+    SelectOptionDict(value='mrx', label='MRX Series'),
+]
+
 
 class AnthemAVSerialConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Anthem AV Serial."""
@@ -61,11 +73,8 @@ class AnthemAVSerialConfigFlow(ConfigFlow, domain=DOMAIN):
             if series not in SUPPORTED_SERIES:
                 errors['base'] = 'invalid_series'
             else:
-                # use port + serial number as unique id
-                serial_number = user_input.get(
-                    CONF_SERIAL_NUMBER, DEFAULT_SERIAL_NUMBER
-                )
-                unique_id = f'{port}_{serial_number}'
+                # use port as unique id (simpler than requiring serial number)
+                unique_id = port
 
                 await self.async_set_unique_id(unique_id)
                 self._abort_if_unique_id_configured()
@@ -77,7 +86,7 @@ class AnthemAVSerialConfigFlow(ConfigFlow, domain=DOMAIN):
                     data={
                         CONF_PORT: port,
                         CONF_SERIES: series,
-                        CONF_SERIAL_NUMBER: serial_number,
+                        CONF_SERIAL_NUMBER: DEFAULT_SERIAL_NUMBER,
                     },
                     options={
                         CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
@@ -94,16 +103,13 @@ class AnthemAVSerialConfigFlow(ConfigFlow, domain=DOMAIN):
                     ),
                     vol.Required(CONF_SERIES, default=DEFAULT_SERIES): SelectSelector(
                         SelectSelectorConfig(
-                            options=SUPPORTED_SERIES,
+                            options=SERIES_OPTIONS,
                             mode=SelectSelectorMode.DROPDOWN,
                         )
                     ),
                     vol.Optional(CONF_NAME, default=DEFAULT_NAME): TextSelector(
                         TextSelectorConfig(type=TextSelectorType.TEXT)
                     ),
-                    vol.Optional(
-                        CONF_SERIAL_NUMBER, default=DEFAULT_SERIAL_NUMBER
-                    ): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
                 }
             ),
             errors=errors,

@@ -1,4 +1,5 @@
 """Tests for Anthem AV Serial media player."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock

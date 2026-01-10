@@ -1,4 +1,5 @@
 """Tests for Anthem AV Serial config flow."""
+
 from __future__ import annotations
 
 from unittest.mock import patch
@@ -15,6 +16,7 @@ from custom_components.anthemav_serial.const import (
     CONF_SERIES,
     DEFAULT_MAX_VOLUME,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_SERIAL_NUMBER,
     DOMAIN,
     SUPPORTED_SERIES,
 )
@@ -45,7 +47,6 @@ async def test_form_valid_input(hass: HomeAssistant) -> None:
             CONF_PORT: '/dev/ttyUSB0',
             CONF_SERIES: 'd2v',
             CONF_NAME: 'My Anthem',
-            CONF_SERIAL_NUMBER: '123456',
         },
     )
 
@@ -54,7 +55,7 @@ async def test_form_valid_input(hass: HomeAssistant) -> None:
     assert result2['data'] == {
         CONF_PORT: '/dev/ttyUSB0',
         CONF_SERIES: 'd2v',
-        CONF_SERIAL_NUMBER: '123456',
+        CONF_SERIAL_NUMBER: DEFAULT_SERIAL_NUMBER,
     }
     assert result2['options'] == {
         CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
@@ -74,7 +75,6 @@ async def test_form_default_name(hass: HomeAssistant) -> None:
             CONF_PORT: '/dev/ttyUSB1',
             CONF_SERIES: 'mrx',
             CONF_NAME: '',
-            CONF_SERIAL_NUMBER: '654321',
         },
     )
 
@@ -99,7 +99,6 @@ async def test_form_invalid_series(hass: HomeAssistant) -> None:
                 CONF_PORT: '/dev/ttyUSB0',
                 CONF_SERIES: 'invalid_series',
                 CONF_NAME: 'Test',
-                CONF_SERIAL_NUMBER: '123456',
             },
         )
 
@@ -119,11 +118,10 @@ async def test_form_duplicate_unique_id(hass: HomeAssistant) -> None:
             CONF_PORT: '/dev/ttyUSB0',
             CONF_SERIES: 'd2v',
             CONF_NAME: 'First Anthem',
-            CONF_SERIAL_NUMBER: '123456',
         },
     )
 
-    # try to create duplicate
+    # try to create duplicate with same port
     result2 = await hass.config_entries.flow.async_init(
         DOMAIN, context={'source': config_entries.SOURCE_USER}
     )
@@ -133,7 +131,6 @@ async def test_form_duplicate_unique_id(hass: HomeAssistant) -> None:
             CONF_PORT: '/dev/ttyUSB0',
             CONF_SERIES: 'd2v',
             CONF_NAME: 'Second Anthem',
-            CONF_SERIAL_NUMBER: '123456',
         },
     )
 
@@ -154,7 +151,6 @@ async def test_form_all_supported_series(hass: HomeAssistant, series: str) -> No
             CONF_PORT: f'/dev/ttyUSB_{series}',
             CONF_SERIES: series,
             CONF_NAME: f'Anthem {series}',
-            CONF_SERIAL_NUMBER: f'{series}_123',
         },
     )
 

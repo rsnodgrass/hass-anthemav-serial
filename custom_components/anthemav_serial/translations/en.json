@@ -2,42 +2,40 @@
   "config": {
     "step": {
       "user": {
-        "title": "Configure Anthem Receiver",
-        "description": "Set up your Anthem A/V Receiver via RS232 serial connection.",
+        "title": "Add Anthem Receiver",
+        "description": "Connect your Anthem A/V receiver via RS232 serial.",
         "data": {
-          "port": "Serial Port",
-          "series": "Device Series",
-          "name": "Device Name",
-          "serial_number": "Serial Number"
+          "port": "Serial port",
+          "series": "Receiver model",
+          "name": "Display name"
         },
         "data_description": {
-          "port": "The serial port path (e.g., /dev/ttyUSB0 or COM3)",
-          "series": "The Anthem device series for protocol selection",
-          "name": "A friendly name for this receiver",
-          "serial_number": "Optional serial number for unique identification"
+          "port": "Serial device path (e.g., /dev/ttyUSB0, /dev/cu.usbserial, or COM3)",
+          "series": "Select your Anthem receiver series",
+          "name": "Name shown in Home Assistant"
         }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to the Anthem receiver",
+      "cannot_connect": "Could not connect. Verify the serial port path and cable connection.",
       "invalid_series": "Invalid device series specified",
-      "unknown": "An unexpected error occurred"
+      "unknown": "Setup failed. Check Home Assistant logs for details."
     },
     "abort": {
-      "already_configured": "This device is already configured"
+      "already_configured": "This receiver is already set up"
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Anthem Receiver Options",
+        "title": "Receiver Settings",
         "data": {
-          "scan_interval": "Update Interval (seconds)",
-          "max_volume": "Maximum Volume Level"
+          "scan_interval": "Update interval (seconds)",
+          "max_volume": "Volume limit"
         },
         "data_description": {
           "scan_interval": "How often to poll the receiver for status updates",
-          "max_volume": "Maximum volume level (0.0 to 1.0) to prevent accidental damage"
+          "max_volume": "Maximum volume percentage to prevent speaker damage"
         }
       }
     }

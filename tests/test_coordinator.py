@@ -1,4 +1,5 @@
 """Tests for Anthem AV Serial coordinator."""
+
 from __future__ import annotations
 
 from typing import Any

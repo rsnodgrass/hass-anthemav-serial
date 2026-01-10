@@ -1,4 +1,5 @@
 """Tests for Anthem AV Serial diagnostics."""
+
 from __future__ import annotations
 
 from datetime import timedelta

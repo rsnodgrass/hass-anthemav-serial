@@ -1,4 +1,5 @@
 """Fixtures for Anthem AV Serial tests."""
+
 from __future__ import annotations
 
 from collections.abc import Generator
