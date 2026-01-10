@@ -1,318 +1,242 @@
-"""Media Player for Anthem A/V Receivers and Processors that support RS232 communication"""
+"""Media Player entity for Anthem A/V Receivers and Processors via RS232."""
+
+from __future__ import annotations
 
 import logging
-from datetime import timedelta
+from typing import Any
 
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
-from homeassistant.components.media_player import PLATFORM_SCHEMA, MediaPlayerEntity
-from homeassistant.components.media_player.const import (
-    SUPPORT_SELECT_SOURCE,
-    SUPPORT_TURN_OFF,
-    SUPPORT_TURN_ON,
-    SUPPORT_VOLUME_MUTE,
-    SUPPORT_VOLUME_SET,
-    SUPPORT_VOLUME_STEP,
+from homeassistant.components.media_player import (
+    MediaPlayerEntity,
+    MediaPlayerEntityFeature,
+    MediaPlayerState,
 )
-from homeassistant.const import (
-    ATTR_ENTITY_ID,
-    CONF_NAME,
-    CONF_PORT,
-    STATE_OFF,
-    STATE_ON,
-)
-from homeassistant.helpers.typing import HomeAssistantType
-
-from anthemav_serial import get_async_amp_controller
-from anthemav_serial.config import DEVICE_CONFIG
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
-    CONF_SERIAL_CONFIG,
+    CONF_MAX_VOLUME,
     CONF_SERIAL_NUMBER,
     CONF_SERIES,
-    CONF_SOURCES,
-    CONF_ZONES,
+    DEFAULT_MAX_VOLUME,
     DOMAIN,
 )
-
-# from anthemav_serial.const import MUTE_KEY, VOLUME_KEY, POWER_KEY, SOURCE_KEY, ZONE_KEY
-
+from .coordinator import AnthemAVSerialCoordinator
 
 LOG = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=10)
 
-# from https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/blackbird/media_player.py
-MEDIA_PLAYER_SCHEMA = vol.Schema({ATTR_ENTITY_ID: cv.comp_entity_ids})
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up Anthem media player from a config entry."""
+    coordinator: AnthemAVSerialCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-CONF_MAX_VOLUME = "max_volume"
-DEFAULT_MAX_VOLUME = 0.6
-MAX_VOLUME_SCHEMA = vol.All(vol.Coerce(float), vol.Range(min=0.0, max=1.0))
+    serial_number = entry.data.get(CONF_SERIAL_NUMBER, '000000')
+    series = entry.data.get(CONF_SERIES, 'd2v')
+    max_volume = entry.options.get(CONF_MAX_VOLUME, DEFAULT_MAX_VOLUME)
 
-ZONE_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_NAME): cv.string,
-        vol.Optional(CONF_MAX_VOLUME, default=DEFAULT_MAX_VOLUME): MAX_VOLUME_SCHEMA,
-    }
-)
-ZONE_IDS = vol.All(vol.Coerce(int), vol.Range(min=1, max=3))  # valid zones: 1-3
+    entities: list[AnthemAVSerialMediaPlayer] = []
 
-# if no zones are specified default to a single main zone for the amp
-DEFAULT_ZONE_CONFIG = {
-    1: {CONF_NAME: "Main", CONF_MAX_VOLUME: DEFAULT_MAX_VOLUME}  # FIXME: translation
-}
-
-SOURCE_SCHEMA = vol.Schema({vol.Required(CONF_NAME): cv.string})
-SOURCE_IDS = vol.All(vol.Coerce(int), vol.Range(min=1, max=9))  # valid sources: 1-9
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {
-        vol.Optional(CONF_NAME): cv.string,
-        vol.Required(CONF_PORT): cv.string,
-        vol.Optional(CONF_SERIAL_CONFIG, default={}): vol.Schema({}),
-        vol.Required(CONF_SERIES, default="d2v"): cv.string,
-        vol.Optional(CONF_ZONES, default=DEFAULT_ZONE_CONFIG): vol.Schema(
-            {ZONE_IDS: ZONE_SCHEMA}
-        ),
-        vol.Optional(CONF_SOURCES): vol.Schema({SOURCE_IDS: SOURCE_SCHEMA}),
-        vol.Optional(CONF_SERIAL_NUMBER, default="000000"): cv.string,
-    }
-)
-
-SUPPORTED_FEATURES_ANTHEM_SERIAL = (
-    SUPPORT_TURN_ON
-    | SUPPORT_TURN_OFF
-    | SUPPORT_VOLUME_SET
-    | SUPPORT_VOLUME_MUTE
-    | SUPPORT_VOLUME_STEP
-    | SUPPORT_VOLUME_MUTE
-    | SUPPORT_SELECT_SOURCE
-)
-
-
-async def async_setup_platform(
-    hass: HomeAssistantType, config, async_add_entities, discovery_info=None
-):
-    """Setup the Anthem media player platform"""
-
-    series = config.get(CONF_SERIES)
-    if series not in DEVICE_CONFIG:
-        LOG.error(
-            "Invalid series '{series}' specified, no protocol provided by anthemav_serial"
-        )
-        return
-
-    # allow configuration of the entire serial_init_args via YAML, instead of hardcoding baud
-    #
-    # E.g.:
-    #  serial_config:
-    #    baudrate: 9600
-    serial_port = config.get(CONF_PORT)
-    serial_overrides = config.get(CONF_SERIAL_CONFIG)
-
-    LOG.info(
-        f"Provisioning Anthem {series} media player at {serial_port} (overrides={serial_overrides})"
-    )
-
-    # FIXME: This is what blocks the event loop (later accesses of amp)
-    amp = await get_async_amp_controller(
-        series, serial_port, hass.loop, serial_config_overrides=serial_overrides
-    )
-    if amp is None:
-        LOG.error(
-            f"Failed to connect to Anthem media player ({serial_port}; {serial_overrides})"
-        )
-        return
-    # amp = None
-    LOG.info(f"amp 3 = {amp}")
-
-    # if no sources are configured by user, default to ALL the sources for the specified amp series
-    sources = config.get(CONF_SOURCES, DEVICE_CONFIG[series].get(CONF_SOURCES))
-
-    flattened_sources = {}
-    for zone_id, data in sources.items():
-        flattened_sources[zone_id] = data[CONF_NAME]
-    LOG.info(f"Configuring {series} sources: {flattened_sources}")
-
-    zones = config[CONF_ZONES]
-
-    # TODO: for Anthems with V2 protocol, default to serial number from IDN? query
-    serial_number = config[CONF_SERIAL_NUMBER]
-
-    # create a media_player for each configured zone
-    entities = []
-    for zone, zone_config in zones.items():
-        name = zone_config.get(CONF_NAME, f"Zone {zone}")
-
-        LOG.info(f"Adding {series} zone {zone} ({name})")
-        entity = AnthemAVSerial(
-            zone_config, amp, serial_number, zone, name, flattened_sources
+    for zone_id in coordinator.zones:
+        zone_name = 'Main Zone' if zone_id == 1 else f'Zone {zone_id}'
+        entity = AnthemAVSerialMediaPlayer(
+            coordinator=coordinator,
+            serial_number=serial_number,
+            series=series,
+            zone_id=zone_id,
+            zone_name=zone_name,
+            max_volume=max_volume,
         )
         entities.append(entity)
+        LOG.info('Adding Anthem %s zone %s (%s)', series, zone_id, zone_name)
 
-    async_add_entities(entities, update_before_add=True)
+    async_add_entities(entities)
     LOG.info(
-        f"Setup of Anthem {series} (SN={serial_number}) complete: {flattened_sources} / {entities}"
+        'Anthem %s media player setup complete with %s zones', series, len(entities)
     )
 
 
-class AnthemAVSerial(MediaPlayerEntity):
-    """Entity reading values from Anthem AVR interface"""
+class AnthemAVSerialMediaPlayer(
+    CoordinatorEntity[AnthemAVSerialCoordinator], MediaPlayerEntity
+):
+    """Entity for controlling Anthem AV receiver zones."""
 
-    def __init__(self, config, amp, serial_number, zone, name, sources):
-        """Initialize Anthem media player zone"""
-        self._config = config
-        # self._amp = amp
-        self._zone = zone
-        self._name = name
-        self._sources = sources
+    _attr_has_entity_name = True
+    _attr_supported_features = (
+        MediaPlayerEntityFeature.TURN_ON
+        | MediaPlayerEntityFeature.TURN_OFF
+        | MediaPlayerEntityFeature.VOLUME_SET
+        | MediaPlayerEntityFeature.VOLUME_MUTE
+        | MediaPlayerEntityFeature.VOLUME_STEP
+        | MediaPlayerEntityFeature.SELECT_SOURCE
+    )
 
-        self._unique_id = f"{DOMAIN}_{serial_number}_{zone}"
+    def __init__(
+        self,
+        coordinator: AnthemAVSerialCoordinator,
+        serial_number: str,
+        series: str,
+        zone_id: int,
+        zone_name: str,
+        max_volume: float,
+    ) -> None:
+        """Initialize the media player entity."""
+        super().__init__(coordinator)
 
-        LOG.info(
-            f"Setting up {name} one {zone}: {sources} - {self.entity_id} / unique = {self.unique_id}"
+        self._serial_number = serial_number
+        self._series = series
+        self._zone_id = zone_id
+        self._zone_name = zone_name
+        self._max_volume = max_volume
+
+        # unique id matches original pattern to preserve entity ids
+        self._attr_unique_id = f'{DOMAIN}_{serial_number}_{zone_id}'
+        self._attr_name = zone_name
+
+        # build source name to id mapping
+        self._source_name_to_id: dict[str, int] = {}
+        for source_id, source_name in coordinator.sources.items():
+            self._source_name_to_id[source_name] = source_id
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information for this entity."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._serial_number)},
+            name=f'Anthem {self._series.upper()}',
+            manufacturer='Anthem',
+            model=self._series.upper(),
+            serial_number=self._serial_number,
         )
-        self._source_names_to_id = {}
-        for zone_id, name in self._sources.items():
-            self._source_names_to_id[name] = zone_id
-
-        self._zone_status = {}
-        self._zone_status["power"] = "Maybe"
-        self._attr = {CONF_MAX_VOLUME: float(self._config.get(CONF_MAX_VOLUME))}
 
     @property
-    def unique_id(self):
-        """Return unique ID for this device."""
-        return self._unique_id
+    def _zone_data(self) -> dict[str, Any]:
+        """Return current zone data from coordinator."""
+        if self.coordinator.data is None:
+            return {}
+        return self.coordinator.data.get(self._zone_id, {})
 
     @property
-    def supported_features(self):
-        """Flags indicating supported media player features"""
-        return SUPPORTED_FEATURES_ANTHEM_SERIAL
-
-    @property
-    def should_poll(self):
-        return True
-
-    async def async_update(self):
-        return
-
-        try:
-            status = await self._amp.zone_status(self._zone)
-            if status:
-                self._zone_status = status
-            LOG.debug(f"Status updated for zone {self._zone}: {self._zone_status}")
-        except Exception as e:
-            LOG.warning(
-                f"Failed updating '{self._name}' (zone {self._zone}) status: {e}"
-            )
-
-    @property
-    def name(self):
-        """Return name of device."""
-        return self._name
-
-    @property
-    def state(self):
-        """Return state of power on/off"""
+    def state(self) -> MediaPlayerState | None:
+        """Return the current state."""
+        power = self._zone_data.get('power')
+        if power is True:
+            return MediaPlayerState.ON
+        if power is False:
+            return MediaPlayerState.OFF
         return None
 
-        power = self._zone_status.get("power")
-        LOG.debug(f"Found power={power} status for {self._name} (zone {self._zone})")
-        if power == True:
-            return STATE_ON
-        elif power == False:
-            return STATE_OFF
-        LOG.warning(
-            f"Missing {self.name} zone {self._zone} power status: {self._zone_status}"
-        )
-        return None
-
-    async def async_turn_on(self):
-        LOG.info(f"Turning on amp {self._name} zone {self._zone}")
-        await self._amp.set_power(self._zone, True)
-
-    async def async_turn_off(self):
-        LOG.info(f"Turning off amp {self._name} zone {self._zone}")
-        await self._amp.set_power(self._zone, False)
-
     @property
-    def volume_level(self):
-        """Return volume level (0.0 ... 1.0)"""
-        volume = self._zone_status.get("volume")
-        # if powered off, the device returns no volume level
+    def volume_level(self) -> float | None:
+        """Return the current volume level (0.0 to 1.0)."""
+        volume = self._zone_data.get('volume')
         if volume is None:
             return None
         return float(volume)
 
-    async def async_set_volume_level(self, volume):
-        """Set the volume (0.0 ... 1.0)"""
-
-        # enforce the max_volume level setting
-        max_volume = float(self._config.get(CONF_MAX_VOLUME))
-        if volume > max_volume:
-            LOG.warning(
-                "Volume setting {volume} is higher than the {self._name} (zone {self._zone}) max_volume {max_volume}, limiting it to {max_volume}"
-            )
-            volume = max_volume
-        else:
-            LOG.info(f"Setting volume for {self._name} (zone {self._zone}) to {volume}")
-
-        await self._amp.set_volume(volume)
-
-    async def async_volume_up(self):
-        LOG.info(f"Increasing volume for {self._name} (zone {self._zone})")
-        # FIXME: need to ensure this also limits to the max_volume setting
-        await self._amp.volume_up(self._zone)
-
-    async def async_volume_down(self):
-        LOG.info(f"Decreasing volume for {self._name} (zone {self._zone})")
-        await self._amp.volume_down(self._zone)
-
     @property
-    def is_volume_muted(self):
-        """Return boolean reflecting mute state on device"""
-        mute = self._zone_status.get("mute")
+    def is_volume_muted(self) -> bool | None:
+        """Return whether the device is muted."""
+        mute = self._zone_data.get('mute')
         if mute is None:
-            return STATE_ON  # note if powered off, the amp is "muted"
-            # FIXME: should this be None or STATE_OFF?
-
-        if mute == True:
-            return STATE_ON
-        elif mute == False:
-            return STATE_OFF
-
-    async def async_mute_volume(self, mute):
-        """Mute the volume"""
-        await self._amp.set_mute(self._zone, mute)
+            # if powered off, consider muted
+            if self._zone_data.get('power') is False:
+                return True
+            return None
+        return bool(mute)
 
     @property
-    def source(self):
-        """Name of the current input source"""
-        source_id = self._zone_status.get("source")
+    def source(self) -> str | None:
+        """Return the current input source."""
+        source_id = self._zone_data.get('source')
         if source_id is None:
-            return None  # NOTE: if powered off, there is no source
+            return None
 
-        name = self._sources.get(source_id)
-        if not name:
-            # dynamically add a source, if the current source wasn't configured by the user
-            # FIXME: use translations!
-            name = f"Source {source_id}"
-            self._sources[source_id] = name
-            self._source_names_to_id[name] = source_id
-        return name
+        source_name = self.coordinator.sources.get(source_id)
+        if source_name is None:
+            # dynamically add source if not in configuration
+            source_name = f'Source {source_id}'
+            self.coordinator.sources[source_id] = source_name
+            self._source_name_to_id[source_name] = source_id
+
+        return source_name
 
     @property
-    def source_list(self):
-        """Return all active, configured input source names"""
-        return self._source_names_to_id.keys()
+    def source_list(self) -> list[str]:
+        """Return all available input sources."""
+        return list(self._source_name_to_id.keys())
 
-    async def async_select_source(self, source):
-        """Select input source."""
-        for source_name, source_id in self._source_names_to_id:
-            if source_name == source:
-                await self._amp.set_source(self._zone, source_id)
-                return
-        LOG.warning(
-            f"Cannot change media player {self.name} to source {source}, source not found!"
+    async def async_turn_on(self) -> None:
+        """Turn on the zone."""
+        LOG.info('Turning on %s (zone %s)', self._zone_name, self._zone_id)
+        await self.coordinator.async_set_power(self._zone_id, True)
+
+    async def async_turn_off(self) -> None:
+        """Turn off the zone."""
+        LOG.info('Turning off %s (zone %s)', self._zone_name, self._zone_id)
+        await self.coordinator.async_set_power(self._zone_id, False)
+
+    async def async_set_volume_level(self, volume: float) -> None:
+        """Set volume level (0.0 to 1.0)."""
+        # enforce maximum volume limit
+        if volume > self._max_volume:
+            LOG.warning(
+                'Volume %s exceeds max %s for %s, limiting',
+                volume,
+                self._max_volume,
+                self._zone_name,
+            )
+            volume = self._max_volume
+
+        LOG.info(
+            'Setting %s (zone %s) volume to %s', self._zone_name, self._zone_id, volume
         )
+        await self.coordinator.async_set_volume(self._zone_id, volume)
+
+    async def async_volume_up(self) -> None:
+        """Increase volume."""
+        LOG.debug('Increasing volume for %s (zone %s)', self._zone_name, self._zone_id)
+        await self.coordinator.async_volume_up(self._zone_id)
+
+    async def async_volume_down(self) -> None:
+        """Decrease volume."""
+        LOG.debug('Decreasing volume for %s (zone %s)', self._zone_name, self._zone_id)
+        await self.coordinator.async_volume_down(self._zone_id)
+
+    async def async_mute_volume(self, mute: bool) -> None:
+        """Mute or unmute the volume."""
+        LOG.info(
+            'Setting mute to %s for %s (zone %s)', mute, self._zone_name, self._zone_id
+        )
+        await self.coordinator.async_set_mute(self._zone_id, mute)
+
+    async def async_select_source(self, source: str) -> None:
+        """Select input source."""
+        source_id = self._source_name_to_id.get(source)
+        if source_id is None:
+            LOG.warning(
+                'Source "%s" not found for %s (zone %s)',
+                source,
+                self._zone_name,
+                self._zone_id,
+            )
+            return
+
+        LOG.info(
+            'Selecting source "%s" (id=%s) for %s (zone %s)',
+            source,
+            source_id,
+            self._zone_name,
+            self._zone_id,
+        )
+        await self.coordinator.async_set_source(self._zone_id, source_id)
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self.async_write_ha_state()
