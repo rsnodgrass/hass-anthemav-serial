@@ -1,0 +1,55 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Anthem Receiver",
+        "description": "Set up your Anthem A/V Receiver via RS232 serial connection.",
+        "data": {
+          "port": "Serial Port",
+          "series": "Device Series",
+          "name": "Device Name",
+          "serial_number": "Serial Number"
+        },
+        "data_description": {
+          "port": "The serial port path (e.g., /dev/ttyUSB0 or COM3)",
+          "series": "The Anthem device series for protocol selection",
+          "name": "A friendly name for this receiver",
+          "serial_number": "Optional serial number for unique identification"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the Anthem receiver",
+      "invalid_series": "Invalid device series specified",
+      "unknown": "An unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "This device is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Anthem Receiver Options",
+        "data": {
+          "scan_interval": "Update Interval (seconds)",
+          "max_volume": "Maximum Volume Level"
+        },
+        "data_description": {
+          "scan_interval": "How often to poll the receiver for status updates",
+          "max_volume": "Maximum volume level (0.0 to 1.0) to prevent accidental damage"
+        }
+      }
+    }
+  },
+  "entity": {
+    "media_player": {
+      "zone": {
+        "name": "Zone {zone_id}"
+      },
+      "main": {
+        "name": "Main Zone"
+      }
+    }
+  }
+}

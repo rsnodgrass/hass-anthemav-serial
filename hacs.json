@@ -1,5 +1,6 @@
 {
   "name": "Anthem Preamp/Receiver (RS232 Serial)",
-  "domains": ["media_player"],
-  "render_readme": true
+  "render_readme": true,
+  "zip_release": false,
+  "filename": "anthemav_serial.zip"
 }
