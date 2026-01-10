@@ -1,7 +1,7 @@
 {
   "domain": "anthemav_serial",
   "name": "Anthem Preamp/Receivers (RS232 Serial)",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "documentation": "https://github.com/rsnodgrass/hass-anthemav-serial/",
   "issue_tracker": "https://github.com/rsnodgrass/hass-anthemav-serial/issues",
   "homeassistant": "2025.2.0",
