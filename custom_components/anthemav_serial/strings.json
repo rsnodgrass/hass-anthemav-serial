@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Add Anthem Receiver",
-        "description": "Connect your Anthem A/V receiver via RS232 serial.",
+        "description": "Connect your Anthem A/V receiver via RS232 serial. [☕ Tip the Author](https://buymeacoffee.com/DYks67r)",
         "data": {
           "port": "Serial port",
           "series": "Receiver model",

@@ -5,9 +5,7 @@
 ![beta_badge](https://img.shields.io/badge/maturity-Beta-yellow.png)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/custom-components/hacs)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-
 [![Buy Me A Coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg)](https://buymeacoffee.com/DYks67r)
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=WREP29UDAMB6G)
 
 ## Supported Hardware
 
@@ -26,7 +24,7 @@ Support for this integration is provided through the [Python anthemav_serial mod
 |  MRX 520, MRX 720, MRX 1120      | mrx2   | Gen2     | Gen2 |
 |  STR amplifiers                  | str    | Gen2     | Gen2 |
 
-## Support
+## Community Help
 
 Visit the Home Assistant community if you need [help with installation and configuration of Anthem A/V receivers](https://community.home-assistant.io/t/anthem-line-of-receivers-and-pre-pros/1605/4).
 
@@ -139,3 +137,9 @@ This would not be hard to implement as the underlying anthemav_serial library al
 ## See Also
 
 * [RS232 to USB cable](https://www.amazon.com/RS232-to-USB/dp/B0759HSLP1?tag=carreramfi-20)
+
+## Support
+
+This integration is maintained in my free time. Sponsorship directly funds new device support and faster updates.
+
+[![Buy Me a Coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg)](https://buymeacoffee.com/DYks67r)
